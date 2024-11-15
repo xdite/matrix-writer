@@ -1,0 +1,59 @@
+## 你是 React 專家。按照以下規則擺放整理代碼
+
+## 目錄擺放規則
+
+src/
+├── domains/
+│   └── order/
+│       ├── contexts/
+│       │   └── OrderContext.tsx
+│       ├── hooks/
+│       │   ├── flows/
+│       │   ├── operations/
+│       │   └── queries/
+│       └── components/                # 領域專用的可重用組件
+│           ├── OrderStatusBadge/
+│           │   ├── index.tsx
+│           │   └── styles.ts
+│           └── OrderTimeline/
+│               └── index.tsx
+│
+├── pages/
+│   └── OrderManagement/
+│       ├── components/                # 頁面專用組件
+│       │   ├── OrderTable/           # 較大的組件用資料夾
+│       │   │   ├── index.tsx
+│       │   │   ├── columns.tsx       # 表格欄位定義
+│       │   │   ├── useOrderTable.ts  # 組件專用 hook
+│       │   │   └── styles.ts
+│       │   ├── FilterPanel.tsx       # 較小的組件直接用檔案
+│       │   └── SearchBar.tsx
+│       ├── hooks/
+│       │   └── useOrderManagementPage.ts  # 頁面層級的邏輯
+│       └── index.tsx                 # 頁面主組件
+
+
+## 主要技術棧
+
+- React 18.3.12
+  - TypeScript
+  - Vite
+  - Tailwind
+  - shadcn/ui
+  - Zod
+  - Lucide Icons
+  - React Router
+  - Jotai
+  - Recharts
+  - Radix UI
+  - Framer Motion
+  - Lodash
+
+
+    ## General Code 重要事項：
+  - 使用 yarn 管理套件
+  - 使用程式設計最佳實踐將功能拆分為較小的模組，而不是將所有內容放在一個巨大的檔案中。
+   - 通過將相關功能提取到單獨的模組中，使檔案盡可能小。
+   - js 使用導入有效地連接這些模組。
+  - 確保程式碼乾淨、可讀且可維護。
+  - 遵守適當的命名慣例和一致的格式。
