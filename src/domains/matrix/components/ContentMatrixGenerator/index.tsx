@@ -97,20 +97,19 @@ export function ContentMatrixGenerator() {
 
         <div className="mb-6">
           <h3 className="text-lg font-semibold mb-4">2. 選擇主題分類與寫作風格</h3>
-          <div className="grid grid-cols-2 gap-6">
-            {/* 左側：主題分類 */}
-            <div>
-              <h4 className="text-sm font-medium mb-3">主題分類</h4>
-              <Tabs defaultValue="general" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-4">
-                  <TabsTrigger value="general">大眾</TabsTrigger>
-                  <TabsTrigger value="niche">利基</TabsTrigger>
-                  <TabsTrigger value="industry">產業</TabsTrigger>
+          <div className="grid grid-cols-12 gap-6">
+            {/* 左側：主題分類標籤頁 (4/12) */}
+            <div className="col-span-4 border-r pr-4">
+              <Tabs defaultValue="general" orientation="vertical">
+                <TabsList className="flex flex-col h-auto space-y-2">
+                  <TabsTrigger value="general" className="w-full justify-start">大眾主題</TabsTrigger>
+                  <TabsTrigger value="niche" className="w-full justify-start">利基主題</TabsTrigger>
+                  <TabsTrigger value="industry" className="w-full justify-start">產業主題</TabsTrigger>
                 </TabsList>
 
                 {Object.entries(THEMES).map(([key, themeList]) => (
                   <TabsContent key={key} value={key}>
-                    <div className="grid grid-cols-1 gap-2">
+                    <div className="grid grid-cols-1 gap-2 mt-4">
                       {themeList.map((theme) => (
                         <Button
                           key={theme}
@@ -127,10 +126,10 @@ export function ContentMatrixGenerator() {
               </Tabs>
             </div>
 
-            {/* 右側：寫作風格 */}
-            <div>
+            {/* 右側：寫作風格 (8/12) */}
+            <div className="col-span-8">
               <h4 className="text-sm font-medium mb-3">寫作風格</h4>
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {STYLES.map((style) => (
                   <Button
                     key={style}
