@@ -2,13 +2,15 @@ import Anthropic from '@anthropic-ai/sdk'
 
 export async function generateIdeasWithClaude(topic: string, theme: string, style: string) {
   const apiKey = localStorage.getItem('claudeApiKey')
+  const ideaCount = Number(localStorage.getItem('ideaCount') || '10')
+  
   if (!apiKey) {
     console.log('API Key missing in localStorage')
     throw new Error('Claude API key not found')
   }
   
   console.log('Using API Key:', apiKey.substring(0, 8) + '...')
-  console.log('Generating ideas for:', { topic, theme, style })
+  console.log('Generating ideas for:', { topic, theme, style, ideaCount })
 
   const anthropic = new Anthropic({
     apiKey: apiKey,
@@ -16,7 +18,7 @@ export async function generateIdeasWithClaude(topic: string, theme: string, styl
   })
 
   const prompt = `
-你是一個內容創作專家。請針對以下主題和風格，生成 10 個具體的內容創作點子：
+你是一個內容創作專家。請針對以下主題和風格，生成 ${ideaCount} 個具體的內容創作點子：
 
 主題: ${topic}
 分類: ${theme}
@@ -52,8 +54,8 @@ export async function generateIdeasWithClaude(topic: string, theme: string, styl
       .split('\n')
       .filter(line => line.trim().length > 0)
       .map(line => line.replace(/^\d+\.\s*/, '')) // 移除開頭的數字和點
-      .slice(1, 11)
-
+      .slice(1, ideaCount + 1) // 第一行不是主題，而是開場文
+　　　　　
     console.log('Processed ideas:', ideas)
     return ideas
   } catch (error) {

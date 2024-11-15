@@ -14,17 +14,23 @@ import { Input } from '@/components/ui/input'
 
 export function Settings() {
   const [apiKey, setApiKey] = useState('')
+  const [ideaCount, setIdeaCount] = useState('10')
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
     const savedKey = localStorage.getItem('claudeApiKey')
+    const savedCount = localStorage.getItem('ideaCount')
     if (savedKey) {
       setApiKey(savedKey)
+    }
+    if (savedCount) {
+      setIdeaCount(savedCount)
     }
   }, [])
 
   const handleSave = () => {
     localStorage.setItem('claudeApiKey', apiKey)
+    localStorage.setItem('ideaCount', ideaCount)
     setOpen(false)
   }
 
@@ -51,6 +57,17 @@ export function Settings() {
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="Enter your Claude API key"
+            />
+          </div>
+          <div className="grid gap-2">
+            <label htmlFor="ideaCount">Number of Ideas to Generate</label>
+            <Input
+              id="ideaCount"
+              type="number"
+              min="1"
+              max="20"
+              value={ideaCount}
+              onChange={(e) => setIdeaCount(e.target.value)}
             />
           </div>
         </div>

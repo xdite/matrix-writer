@@ -41,7 +41,6 @@ export function ContentMatrixGenerator() {
     setIsGenerating(true)
 
     try {
-      // Create topic and style
       const topic = {
         name: customTopic,
         category: 'general' as const,
@@ -55,11 +54,9 @@ export function ContentMatrixGenerator() {
       }
       addStyle(style)
 
-      // Generate ideas using Claude
       const ideas = await generateIdeasWithClaude(customTopic, selectedTheme, selectedStyle)
       setGeneratedIdeas(ideas)
 
-      // Add ideas to matrix context
       ideas.forEach(content => {
         addIdea({
           topicId: topic.id,
@@ -99,46 +96,53 @@ export function ContentMatrixGenerator() {
         </div>
 
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-4">2. 選擇主題分類</h3>
-          <Tabs defaultValue="general" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="general">大眾主題</TabsTrigger>
-              <TabsTrigger value="niche">利基主題</TabsTrigger>
-              <TabsTrigger value="industry">產業主題</TabsTrigger>
-            </TabsList>
+          <h3 className="text-lg font-semibold mb-4">2. 選擇主題分類與寫作風格</h3>
+          <div className="grid grid-cols-2 gap-6">
+            {/* 左側：主題分類 */}
+            <div>
+              <h4 className="text-sm font-medium mb-3">主題分類</h4>
+              <Tabs defaultValue="general" className="w-full">
+                <TabsList className="grid w-full grid-cols-3 mb-4">
+                  <TabsTrigger value="general">大眾</TabsTrigger>
+                  <TabsTrigger value="niche">利基</TabsTrigger>
+                  <TabsTrigger value="industry">產業</TabsTrigger>
+                </TabsList>
 
-            {Object.entries(THEMES).map(([key, themeList]) => (
-              <TabsContent key={key} value={key}>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-4">
-                  {themeList.map((theme) => (
-                    <Button
-                      key={theme}
-                      variant={selectedTheme === theme ? "default" : "outline"}
-                      onClick={() => setSelectedTheme(theme)}
-                      className="w-full"
-                    >
-                      {theme}
-                    </Button>
-                  ))}
-                </div>
-              </TabsContent>
-            ))}
-          </Tabs>
-        </div>
+                {Object.entries(THEMES).map(([key, themeList]) => (
+                  <TabsContent key={key} value={key}>
+                    <div className="grid grid-cols-1 gap-2">
+                      {themeList.map((theme) => (
+                        <Button
+                          key={theme}
+                          variant={selectedTheme === theme ? "default" : "outline"}
+                          onClick={() => setSelectedTheme(theme)}
+                          className="w-full justify-start"
+                        >
+                          {theme}
+                        </Button>
+                      ))}
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            </div>
 
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-4">3. 選擇寫作風格</h3>
-          <div className="grid grid-cols-2 gap-2">
-            {STYLES.map((style) => (
-              <Button
-                key={style}
-                variant={selectedStyle === style ? "default" : "outline"}
-                onClick={() => setSelectedStyle(style)}
-                className="w-full"
-              >
-                {style}
-              </Button>
-            ))}
+            {/* 右側：寫作風格 */}
+            <div>
+              <h4 className="text-sm font-medium mb-3">寫作風格</h4>
+              <div className="grid grid-cols-1 gap-2">
+                {STYLES.map((style) => (
+                  <Button
+                    key={style}
+                    variant={selectedStyle === style ? "default" : "outline"}
+                    onClick={() => setSelectedStyle(style)}
+                    className="w-full justify-start"
+                  >
+                    {style}
+                  </Button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
