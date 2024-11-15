@@ -16,7 +16,7 @@ export async function generateIdeasWithClaude(topic: string, theme: string, styl
   })
 
   const prompt = `
-你是一個內容創作專家。請針對以下主題和風格，生成 5 個具體的內容創作點子：
+你是一個內容創作專家。請針對以下主題和風格，生成 10 個具體的內容創作點子：
 
 主題: ${topic}
 分類: ${theme}
@@ -52,7 +52,7 @@ export async function generateIdeasWithClaude(topic: string, theme: string, styl
       .split('\n')
       .filter(line => line.trim().length > 0)
       .map(line => line.replace(/^\d+\.\s*/, '')) // 移除開頭的數字和點
-      .slice(0, 5)
+      .slice(1, 11)
 
     console.log('Processed ideas:', ideas)
     return ideas
