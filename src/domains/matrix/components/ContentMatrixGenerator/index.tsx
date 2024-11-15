@@ -90,44 +90,51 @@ export function ContentMatrixGenerator() {
             id="customTopic"
             value={customTopic}
             onChange={(e) => setCustomTopic(e.target.value)}
-            placeholder="例如：Ruby on Rails、React、Vue.js"
+            placeholder=""
             className="mb-4"
           />
         </div>
 
         <div className="mb-6">
           <h3 className="text-lg font-semibold mb-4">2. 選擇主題分類與寫作風格</h3>
-          <div className="grid grid-cols-12 gap-6">
+          <div className="grid grid-cols-12 gap-6 relative">
+            {/* 中間的分隔線 */}
+            <div className="absolute top-0 bottom-0 left-1/3 w-[1px] bg-gray-200 shadow-[1px_0_0_0_rgba(0,0,0,0.1)]" />
+
             {/* 左側：主題分類標籤頁 (4/12) */}
-            <div className="col-span-4 border-r pr-4">
-              <Tabs defaultValue="general" orientation="vertical">
-                <TabsList className="flex flex-col h-auto space-y-2">
+            <div className="col-span-4">
+              <Tabs defaultValue="general" className="flex">
+                {/* 左側標籤列表 */}
+                <TabsList className="flex flex-col h-auto space-y-2 w-1/3">
                   <TabsTrigger value="general" className="w-full justify-start">大眾主題</TabsTrigger>
                   <TabsTrigger value="niche" className="w-full justify-start">利基主題</TabsTrigger>
                   <TabsTrigger value="industry" className="w-full justify-start">產業主題</TabsTrigger>
                 </TabsList>
 
-                {Object.entries(THEMES).map(([key, themeList]) => (
-                  <TabsContent key={key} value={key}>
-                    <div className="grid grid-cols-1 gap-2 mt-4">
-                      {themeList.map((theme) => (
-                        <Button
-                          key={theme}
-                          variant={selectedTheme === theme ? "default" : "outline"}
-                          onClick={() => setSelectedTheme(theme)}
-                          className="w-full justify-start"
-                        >
-                          {theme}
-                        </Button>
-                      ))}
-                    </div>
-                  </TabsContent>
-                ))}
+                {/* 右側內容區域 */}
+                <div className="flex-1 pl-4">
+                  {Object.entries(THEMES).map(([key, themeList]) => (
+                    <TabsContent key={key} value={key}>
+                      <div className="grid grid-cols-1 gap-2">
+                        {themeList.map((theme) => (
+                          <Button
+                            key={theme}
+                            variant={selectedTheme === theme ? "default" : "outline"}
+                            onClick={() => setSelectedTheme(theme)}
+                            className="w-full justify-start"
+                          >
+                            {theme}
+                          </Button>
+                        ))}
+                      </div>
+                    </TabsContent>
+                  ))}
+                </div>
               </Tabs>
             </div>
 
             {/* 右側：寫作風格 (8/12) */}
-            <div className="col-span-8">
+            <div className="col-span-8 pl-8">
               <h4 className="text-sm font-medium mb-3">寫作風格</h4>
               <div className="grid grid-cols-2 gap-2">
                 {STYLES.map((style) => (
