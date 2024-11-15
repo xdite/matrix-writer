@@ -11,7 +11,7 @@ function App() {
       <div className="min-h-screen bg-gray-100 p-8 relative">
         <Settings />
         <div className="max-w-7xl mx-auto space-y-8">
-          <h1 className="text-3xl font-bold">Content Matrix Generator</h1>
+          <h1 className="text-3xl font-bold">內容矩陣產生器</h1>
           <ContentMatrixGenerator />
           <ContentMatrix />
         </div>

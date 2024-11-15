@@ -78,11 +78,9 @@ export function ContentMatrixGenerator() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>內容矩陣產生器</CardTitle>
-      </CardHeader>
+
       <CardContent>
-        <div className="mb-6">
+        <div className="mb-6 mt-6">
           <label htmlFor="customTopic" className="block text-lg font-semibold mb-2">
             1. 輸入想寫的主題
           </label>
