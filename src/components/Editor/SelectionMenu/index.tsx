@@ -7,26 +7,11 @@ import { textAssistantService } from '@/domains/matrix/services/textAssistantSer
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/lib/utils'
 import { marked } from 'marked'
+import commands from '@/domains/matrix/constants/commands.json'
 
 interface SelectionMenuProps {
   editor: Editor
 }
-
-// Add preset commands
-const PRESET_COMMANDS = [
-  {
-    label: '擴寫 200 字',
-    command: '請幫我將選取的文字擴寫成 200 字左右的段落，保持原意但更詳細。'
-  },
-  {
-    label: '更吸引人', 
-    command: '請幫我改寫這段文字，讓它更吸引人、更有說服力，但保持原意。'
-  },
-  {
-    label: '改寫承接上下文',
-    command: '請幫我改寫這段文字，讓它能更好地承接上下文，使文章更連貫流暢。'
-  }
-]
 
 export function SelectionMenu({ editor }: SelectionMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -239,7 +224,7 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
       if (e.altKey && e.key >= '1' && e.key <= '3') {
         e.preventDefault()
         const index = parseInt(e.key) - 1
-        const preset = PRESET_COMMANDS[index]
+        const preset = commands.presetCommands[index]
         if (preset) {
           setCommand(preset.command)
         }
@@ -341,9 +326,9 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
               </div>
             )}
 
-            {/* 改為並排的預設命令按鈕 */}
+            {/* 使用 JSON 中的預設命令 */}
             <div className="grid grid-cols-3 gap-2">
-              {PRESET_COMMANDS.map((preset, index) => (
+              {commands.presetCommands.map((preset, index) => (
                 <Button
                   key={index}
                   variant="outline" 
