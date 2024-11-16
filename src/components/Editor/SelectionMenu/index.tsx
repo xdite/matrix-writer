@@ -11,9 +11,10 @@ import commands from '@/domains/matrix/constants/commands.json'
 
 interface SelectionMenuProps {
   editor: Editor
+  onSave?: () => void
 }
 
-export function SelectionMenu({ editor }: SelectionMenuProps) {
+export function SelectionMenu({ editor, onSave }: SelectionMenuProps) {
   const [isOpen, setIsOpen] = useState(() => {
     return localStorage.getItem('aiSidebarOpen') === 'true'
   })
@@ -103,6 +104,8 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
     tempDiv.innerHTML = suggestion
     const plainText = tempDiv.textContent || ''
     editor.commands.insertContent(plainText)
+    
+    onSave?.()
   }
 
   const handleForceClose = () => {
@@ -122,23 +125,17 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
 
   const handleInsertCode = (text: string, index: number) => {
     if (selectionRange) {
-      // 移動到原始選取的結束位置
       editor.commands.setTextSelection(selectionRange.to)
       
-      // 將文字轉換為 HTML
       const htmlContent = marked(text, {
         breaks: true,
         gfm: true
       })
       
-      // 在插入前後都加入換行，並插入轉換後的 HTML
       editor.commands.insertContent('\n\n' + htmlContent + '\n\n')
     }
     
-    toast({
-      title: "已插入程式碼",
-      description: "程式碼已插入到選取位置之後",
-    })
+    onSave?.()
   }
 
   const renderWithCopyButton = (html: string) => {

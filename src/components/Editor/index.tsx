@@ -76,9 +76,10 @@ const CustomKeymap = Extension.create({
 interface EditorProps {
   value: string
   onChange: (value: string) => void
+  onSave?: () => void
 }
 
-export function Editor({ value, onChange }: EditorProps) {
+export function Editor({ value, onChange, onSave }: EditorProps) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -239,7 +240,7 @@ export function Editor({ value, onChange }: EditorProps) {
         </ToolbarButton>
       </div>
 
-      <SelectionMenu editor={editor} />
+      <SelectionMenu editor={editor} onSave={onSave} />
 
       <EditorContent editor={editor} />
     </div>
