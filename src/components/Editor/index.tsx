@@ -21,7 +21,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { SelectionMenu } from './SelectionMenu'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { debounce } from 'lodash'
 
 const lowlight = createLowlight(common)
@@ -82,20 +82,16 @@ interface EditorProps {
 
 export function Editor({ value, onChange, onSave }: EditorProps) {
   const previousValueRef = useRef(value)
-  const updateTimeoutRef = useRef<number>()
-
-  // 建立防抖的 onChange 處理器
-  const debouncedOnChange = useMemo(
-    () => debounce((html: string) => {
-      onChange(html)
-    }, 300),
-    [onChange]
-  )
+  const [isDirty, setIsDirty] = useState(false)
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         codeBlock: false,
+        history: {
+          depth: 100,
+          newGroupDelay: 500
+        }
       }),
       Placeholder.configure({
         placeholder: '開始寫作...',
@@ -113,41 +109,35 @@ export function Editor({ value, onChange, onSave }: EditorProps) {
       },
     },
     onUpdate: ({ editor }) => {
-      // 清除之前的 timeout
-      if (updateTimeoutRef.current) {
-        window.clearTimeout(updateTimeoutRef.current)
-      }
-
-      // 設定新的 timeout 來延遲更新
-      updateTimeoutRef.current = window.setTimeout(() => {
-        const newContent = editor.getHTML()
-        if (newContent !== value) {
-          debouncedOnChange(newContent)
-        }
-      }, 100)
+      setIsDirty(true)
     },
   })
-
-  // 清理防抖
-  useEffect(() => {
-    return () => {
-      debouncedOnChange.cancel()
-      if (updateTimeoutRef.current) {
-        window.clearTimeout(updateTimeoutRef.current)
-      }
-    }
-  }, [debouncedOnChange])
 
   // 優化 content 更新邏輯
   useEffect(() => {
     if (editor && value !== previousValueRef.current) {
-      const selection = editor.state.selection
-      editor.commands.setContent(value, false)
-      // 嘗試保持光標位置
-      editor.commands.setTextSelection(selection.from)
+      const { from, to } = editor.state.selection
+      const currentContent = editor.getHTML()
+      
+      if (value !== currentContent) {
+        editor.chain()
+          .setContent(value, false)
+          .setTextSelection({ from, to })
+          .run()
+      }
+      
       previousValueRef.current = value
+      setIsDirty(false)
     }
   }, [value, editor])
+
+  const handleSave = () => {
+    if (editor && isDirty) {
+      onChange(editor.getHTML())
+      onSave?.()
+      setIsDirty(false)
+    }
+  }
 
   if (!editor) {
     return null
@@ -275,6 +265,17 @@ export function Editor({ value, onChange, onSave }: EditorProps) {
         >
           <Redo className="h-4 w-4" />
         </ToolbarButton>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleSave}
+          disabled={!isDirty}
+          className="flex items-center gap-2"
+        >
+          <Save className="h-4 w-4" />
+          {isDirty ? "儲存" : "已儲存"}
+        </Button>
       </div>
 
       <SelectionMenu editor={editor} onSave={onSave} />
