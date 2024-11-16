@@ -104,16 +104,15 @@ export function WritingPage() {
     setText('')
     
     try {
+      let currentText = ''
       await writingService.generateArticle(
         writing.topic,
         writing.style,
         writing.content,
         (content) => {
-          setText(prev => {
-            const newText = prev + content
-            console.log('Current editor content:', newText)
-            return newText
-          })
+          currentText += content
+          setText(currentText)
+          console.log('Updating editor with text length:', currentText.length)
         }
       )
       
@@ -169,13 +168,21 @@ export function WritingPage() {
               <Button
                 onClick={handleGenerateArticle}
                 disabled={isGenerating}
+                className="mb-4"
               >
-                {isGenerating ? "生成中..." : "AI 寫作"}
+                {isGenerating ? (
+                  <>
+                    <span className="animate-pulse">生成中...</span>
+                  </>
+                ) : (
+                  "AI 寫作"
+                )}
               </Button>
             </div>
             <Editor 
+              key={text}
               value={text} 
-              onChange={handleTextChange} 
+              onChange={handleTextChange}
             />
           </div>
         </CardContent>
