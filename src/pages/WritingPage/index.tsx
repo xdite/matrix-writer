@@ -3,24 +3,55 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useMatrix } from '@/domains/matrix/contexts/MatrixContext'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
+import { ArrowLeft, Save } from 'lucide-react'
+import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Editor } from '@/components/Editor'
+import { useToast } from '@/components/ui/use-toast'
+import { Writing } from '@/domains/matrix/types'
 
 export function WritingPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { getWriting, updateWriting } = useMatrix()
+  const { toast } = useToast()
   const [text, setText] = useState('')
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving'>('saved')
-  
-  const writing = getWriting(id!)
+  const [isDirty, setIsDirty] = useState(false)
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
+  const [writing, setWriting] = useState<Writing | undefined>()
+  const [isLoading, setIsLoading] = useState(true)
   
   useEffect(() => {
-    if (writing) {
-      setText(writing.text)
+    const loadWriting = async () => {
+      if (!id) return
+      setIsLoading(true)
+      try {
+        const loadedWriting = await getWriting(id)
+        setWriting(loadedWriting)
+        if (loadedWriting) {
+          setText(loadedWriting.text)
+          setLastSavedAt(new Date(loadedWriting.updatedAt))
+        }
+      } catch (error) {
+        console.error('Error loading writing:', error)
+        toast({
+          title: "載入失敗",
+          description: "無法載入文章內容",
+          variant: "destructive"
+        })
+      } finally {
+        setIsLoading(false)
+      }
     }
-  }, [writing])
+    loadWriting()
+  }, [id, getWriting])
+
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto py-8">
+        <div className="text-center">載入中...</div>
+      </div>
+    )
+  }
 
   if (!writing) {
     return (
@@ -40,15 +71,26 @@ export function WritingPage() {
 
   const handleTextChange = (newText: string) => {
     setText(newText)
-    setSaveStatus('saving')
-    updateWriting(writing.id, newText)
-    
-    // 延遲顯示保存狀態
-    const timer = setTimeout(() => {
-      setSaveStatus('saved')
-    }, 1000)
+    setIsDirty(true)
+  }
 
-    return () => clearTimeout(timer)
+  const handleSave = async () => {
+    try {
+      await updateWriting(writing.id, text)
+      setIsDirty(false)
+      setLastSavedAt(new Date())
+      toast({
+        title: "已儲存",
+        description: "文章已成功儲存",
+      })
+    } catch (error) {
+      console.error('Error saving writing:', error)
+      toast({
+        title: "儲存失敗",
+        description: "無法儲存文章內容",
+        variant: "destructive"
+      })
+    }
   }
 
   return (
@@ -59,14 +101,9 @@ export function WritingPage() {
           返回文章列表
         </Button>
         <div className="flex-1" />
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-muted-foreground">
-            {saveStatus === 'saving' ? '儲存中...' : '已儲存'}
-          </span>
-          <div className="flex gap-2">
-            <Badge variant="secondary">{writing.topic}</Badge>
-            <Badge variant="outline">{writing.style}</Badge>
-          </div>
+        <div className="flex gap-2">
+          <Badge variant="secondary">{writing.topic}</Badge>
+          <Badge variant="outline">{writing.style}</Badge>
         </div>
       </div>
 
@@ -85,6 +122,21 @@ export function WritingPage() {
         <CardContent className="pt-6">
           <Editor value={text} onChange={handleTextChange} />
         </CardContent>
+        <CardFooter className="flex items-center justify-between py-4 px-6 border-t bg-muted/50">
+          <div className="text-sm text-muted-foreground">
+            {lastSavedAt && (
+              <span>上次儲存：{lastSavedAt.toLocaleTimeString()}</span>
+            )}
+          </div>
+          <Button 
+            onClick={handleSave}
+            disabled={!isDirty}
+            variant={isDirty ? "default" : "outline"}
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {isDirty ? "儲存" : "已儲存"}
+          </Button>
+        </CardFooter>
       </Card>
     </div>
   )

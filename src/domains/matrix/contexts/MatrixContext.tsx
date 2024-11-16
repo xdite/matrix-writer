@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { Topic, Style, Idea, MatrixCell, SelectedIdea, Writing } from '../types'
+import { writingDB } from '@/services/db'
 
 interface MatrixContextType {
   topics: Topic[]
@@ -35,10 +36,7 @@ export function MatrixProvider({ children }: { children: React.ReactNode }) {
     const saved = localStorage.getItem(STORAGE_KEY.SELECTED_IDEAS)
     return saved ? JSON.parse(saved) : []
   })
-  const [writings, setWritings] = useState<Writing[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY.WRITINGS)
-    return saved ? JSON.parse(saved) : []
-  })
+  const [writings, setWritings] = useState<Writing[]>([])
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY.SELECTED_IDEAS, JSON.stringify(selectedIdeas))
@@ -47,6 +45,18 @@ export function MatrixProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY.WRITINGS, JSON.stringify(writings))
   }, [writings])
+
+  useEffect(() => {
+    const loadWritings = async () => {
+      try {
+        const loadedWritings = await writingDB.getAllWritings()
+        setWritings(loadedWritings)
+      } catch (error) {
+        console.error('Error loading writings:', error)
+      }
+    }
+    loadWritings()
+  }, [])
 
   const addTopic = (topic: Omit<Topic, 'id'>) => {
     setTopics(prev => [...prev, { ...topic, id: crypto.randomUUID() }])
@@ -71,7 +81,6 @@ export function MatrixProvider({ children }: { children: React.ReactNode }) {
   }
 
   const addToSelected = (idea: Idea, topic: string, style: string) => {
-    // 檢查是否已經存在相同的點子
     const exists = selectedIdeas.some(selected => selected.id === idea.id)
     if (exists) return
 
@@ -92,7 +101,7 @@ export function MatrixProvider({ children }: { children: React.ReactNode }) {
     setSelectedIdeas([])
   }
 
-  const createWriting = (selectedIdea: SelectedIdea) => {
+  const createWriting = async (selectedIdea: SelectedIdea) => {
     const newWriting: Writing = {
       id: selectedIdea.id,
       content: selectedIdea.content,
@@ -102,25 +111,54 @@ export function MatrixProvider({ children }: { children: React.ReactNode }) {
       createdAt: new Date(),
       updatedAt: new Date()
     }
-    setWritings(prev => [...prev, newWriting])
-    // 可選：從 selectedIdeas 中移除
-    // setSelectedIdeas(prev => prev.filter(idea => idea.id !== selectedIdea.id))
+
+    try {
+      await writingDB.saveWriting(newWriting)
+      setWritings(prev => [...prev, newWriting])
+    } catch (error) {
+      console.error('Error creating writing:', error)
+      throw error
+    }
   }
 
-  const updateWriting = (id: string, text: string) => {
-    setWritings(prev => prev.map(writing => 
-      writing.id === id 
-        ? { ...writing, text, updatedAt: new Date() }
-        : writing
-    ))
+  const updateWriting = async (id: string, text: string) => {
+    const writing = writings.find(w => w.id === id)
+    if (!writing) return
+
+    const updatedWriting = {
+      ...writing,
+      text,
+      updatedAt: new Date()
+    }
+
+    try {
+      await writingDB.saveWriting(updatedWriting)
+      setWritings(prev => prev.map(w => 
+        w.id === id ? updatedWriting : w
+      ))
+    } catch (error) {
+      console.error('Error updating writing:', error)
+      throw error
+    }
   }
 
-  const getWriting = (id: string) => {
-    return writings.find(writing => writing.id === id)
+  const getWriting = async (id: string) => {
+    try {
+      return await writingDB.getWriting(id)
+    } catch (error) {
+      console.error('Error getting writing:', error)
+      return undefined
+    }
   }
 
-  const deleteWriting = (id: string) => {
-    setWritings(prev => prev.filter(writing => writing.id !== id))
+  const deleteWriting = async (id: string) => {
+    try {
+      await writingDB.deleteWriting(id)
+      setWritings(prev => prev.filter(w => w.id !== id))
+    } catch (error) {
+      console.error('Error deleting writing:', error)
+      throw error
+    }
   }
 
   return (
