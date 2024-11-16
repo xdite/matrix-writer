@@ -10,13 +10,15 @@ interface ClaudeConfig {
   model: string
   maxTokens: number
   temperature: number
+  stream?: boolean
 }
 
 export class IdeaService {
   private config: ClaudeConfig = {
     model: 'claude-3-5-sonnet-20241022',
     maxTokens: 2000,
-    temperature: 0.7
+    temperature: 0.7,
+    stream: false
   }
 
   private generatePrompt(topic: string, theme: string, style: string, ideaCount: number) {
@@ -51,7 +53,12 @@ export class IdeaService {
 
   async generateIdeas(topic: string, theme: string, style: string, ideaCount: number) {
     const prompt = this.generatePrompt(topic, theme, style, ideaCount)
-    const response = await generateIdeasWithClaude(prompt, this.config)
+    const response = await generateIdeasWithClaude(prompt, { 
+      config: this.config,
+      onStream: this.config.stream ? (content) => {
+        console.log('Streaming content:', content)
+      } : undefined
+    })
     return this.processIdeas(response, ideaCount)
   }
 }

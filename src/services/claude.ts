@@ -4,9 +4,15 @@ interface ClaudeConfig {
   model: string
   maxTokens: number
   temperature: number
+  stream?: boolean
 }
 
-export async function generateIdeasWithClaude(prompt: string, config: ClaudeConfig) {
+interface ClaudeOptions {
+  config: ClaudeConfig
+  onStream?: (content: string) => void
+}
+
+export async function generateIdeasWithClaude(prompt: string, options: ClaudeOptions) {
   const apiKey = localStorage.getItem('claudeApiKey')
   
   if (!apiKey) {
@@ -23,20 +29,48 @@ export async function generateIdeasWithClaude(prompt: string, config: ClaudeConf
 
   try {
     console.log('Sending request to Claude API...')
-    const response = await anthropic.messages.create({
-      model: config.model,
-      max_tokens: config.maxTokens,
-      temperature: config.temperature,
-      messages: [
-        {
-          role: 'user',
-          content: prompt
-        }
-      ]
-    })
     
-    console.log('Received response:', response)
-    return response
+    if (options.config.stream) {
+      const response = await anthropic.messages.create({
+        model: options.config.model,
+        max_tokens: options.config.maxTokens,
+        temperature: options.config.temperature,
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        stream: true
+      })
+
+      let fullContent = ''
+      for await (const chunk of response) {
+        const content = chunk.content[0]?.text || ''
+        fullContent += content
+        options.onStream?.(content)
+      }
+
+      return {
+        content: [{ text: fullContent }]
+      }
+    } else {
+      const response = await anthropic.messages.create({
+        model: options.config.model,
+        max_tokens: options.config.maxTokens,
+        temperature: options.config.temperature,
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        stream: false
+      })
+      
+      console.log('Received response:', response)
+      return response
+    }
 
   } catch (error: unknown) {
     console.error('Detailed error:', {
