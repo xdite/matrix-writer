@@ -14,7 +14,15 @@ interface SelectionMenuProps {
 }
 
 export function SelectionMenu({ editor }: SelectionMenuProps) {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(() => {
+    return localStorage.getItem('aiSidebarOpen') === 'true'
+  })
+  
+  useEffect(() => {
+    localStorage.setItem('aiSidebarOpen', isOpen.toString())
+  }, [isOpen])
+
+  const [keepOpen, setKeepOpen] = useState(false)
   const [command, setCommand] = useState('')
   const [selectedText, setSelectedText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -47,12 +55,7 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
     setCommand('')
     setSuggestion('')
     setIsOpen(true)
-    
-    // 取消選取
-    editor.commands.setTextSelection({
-      from: from,
-      to: from
-    })
+    localStorage.setItem('aiSidebarOpen', 'true')
   }
 
   const scrollToBottom = () => {
@@ -99,16 +102,14 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
     const tempDiv = document.createElement('div')
     tempDiv.innerHTML = suggestion
     const plainText = tempDiv.textContent || ''
-
     editor.commands.insertContent(plainText)
-    
-    handleClose()
   }
 
-  const handleClose = () => {
+  const handleForceClose = () => {
     setIsOpen(false)
     setCommand('')
     setSuggestion('')
+    localStorage.setItem('aiSidebarOpen', 'false')
   }
 
   const handleCopy = (text: string, index: number) => {
@@ -235,6 +236,27 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, selectedText])
 
+  // Add effect to update selected text when selection changes
+  useEffect(() => {
+    const handleSelectionUpdate = () => {
+      if (editor && isOpen) {
+        const { from, to } = editor.state.selection
+        const text = editor.state.doc.textBetween(from, to)
+        if (text) {
+          setSelectedText(text)
+          setSelectionRange({ from, to })
+        }
+      }
+    }
+
+    // Listen to selection changes
+    editor.on('selectionUpdate', handleSelectionUpdate)
+    
+    return () => {
+      editor.off('selectionUpdate', handleSelectionUpdate)
+    }
+  }, [editor, isOpen])
+
   return (
     <>
       <BubbleMenu 
@@ -311,7 +333,7 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
             <Button
               variant="ghost"
               size="icon"
-              onClick={handleClose}
+              onClick={handleForceClose}
             >
               <X className="h-4 w-4" />
             </Button>
