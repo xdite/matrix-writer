@@ -21,6 +21,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { SelectionMenu } from './SelectionMenu'
+import { useEffect } from 'react'
 
 const lowlight = createLowlight(common)
 
@@ -102,6 +103,13 @@ export function Editor({ value, onChange }: EditorProps) {
       onChange(editor.getHTML())
     },
   })
+
+  useEffect(() => {
+    if (editor && value !== editor.getHTML()) {
+      console.log('Updating editor content:', value)
+      editor.commands.setContent(value, false)
+    }
+  }, [value, editor])
 
   if (!editor) {
     return null

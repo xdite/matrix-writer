@@ -103,23 +103,29 @@ export function WritingPage() {
 
     setIsGenerating(true)
     setText('')
-
+    
     try {
       await writingService.generateArticle(
         writing.topic,
         writing.style,
         writing.content,
         (content) => {
-          const processedContent = content.replace(/^.+?[\r\n]/, '')
-          setText(processedContent)
-          if (editorRef.current) {
-            setTimeout(() => {
-              editorRef.current?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'end'
-              })
-            }, 100)
-          }
+          console.log('Setting text:', content)
+          setText(content)
+          
+          // 使用 requestAnimationFrame 確保在 DOM 更新後執行滾動
+          requestAnimationFrame(() => {
+            if (editorRef.current) {
+              // 滾動到編輯器底部
+              const editorElement = editorRef.current.querySelector('.ProseMirror')
+              if (editorElement) {
+                editorElement.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'end'
+                })
+              }
+            }
+          })
         }
       )
 
@@ -181,8 +187,10 @@ export function WritingPage() {
         <CardContent className="pt-6">
           <div ref={editorRef}>
             <Editor
+              key={text}
               value={text}
               onChange={handleTextChange}
+              defaultValue=""
             />
           </div>
         </CardContent>

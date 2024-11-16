@@ -61,15 +61,24 @@ export class WritingService {
         config: this.config,
         onStream: (content) => {
           fullContent += content
-          const renderedHtml = marked(fullContent, { breaks: true })
-          onProgress?.(renderedHtml)
+          const htmlContent = marked(fullContent, {
+            breaks: true,
+            gfm: true,
+          })
+          console.log('Streaming HTML:', htmlContent)
+          onProgress?.(htmlContent)
         }
       })
 
-      // Remove the first line from the final content
       const processedContent = fullContent.replace(/^.+?[\r\n]/, '')
-      console.log('Final generated text:', processedContent)
-      return processedContent
+      const finalHtml = marked(processedContent, {
+        breaks: true,
+        gfm: true,
+      })
+      console.log('Final HTML content:', finalHtml)
+      
+      onProgress?.(finalHtml)
+      return finalHtml
     } catch (error) {
       console.error('Error generating article:', error)
       throw error

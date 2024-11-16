@@ -949,6 +949,11 @@
   resolved "https://registry.yarnpkg.com/@tiptap/extension-code/-/extension-code-2.9.1.tgz#5652c379cbdf06f95c90f93085256b24d421d9d9"
   integrity sha512-WQqcVGe7i/E+yO3wz5XQteU1ETNZ00euUEl4ylVVmH2NM4Dh0KDjEhbhHlCM0iCfLUo7jhjC7dmS+hMdPUb+Tg==
 
+"@tiptap/extension-collaboration@^2.9.1":
+  version "2.9.1"
+  resolved "https://registry.yarnpkg.com/@tiptap/extension-collaboration/-/extension-collaboration-2.9.1.tgz#f6482d8a19e59eae1697698f933e3ec416624644"
+  integrity sha512-AaS66O4X0rx1WLnCC3LW5fLk7ZULr0t7/gj/7dNgbBtyg4NhoYc3PhSBiimLbgD+R8wFrfm1lsHb02deaqQB6w==
+
 "@tiptap/extension-document@^2.9.1":
   version "2.9.1"
   resolved "https://registry.yarnpkg.com/@tiptap/extension-document/-/extension-document-2.9.1.tgz#ea65a86a4d2524ec65fc4775122f652840a89386"
