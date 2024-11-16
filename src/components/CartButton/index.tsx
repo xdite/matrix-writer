@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ShoppingCart, X, Pencil } from 'lucide-react'
 import { useMatrix } from '@/domains/matrix/contexts/MatrixContext'
@@ -25,9 +25,11 @@ import {
 import { useNavigate } from 'react-router-dom'
 
 export function CartButton() {
-  const { selectedIdeas, removeFromSelected } = useMatrix()
+  const { selectedIdeas, removeFromSelected, createWriting } = useMatrix()
   const { toast } = useToast()
   const navigate = useNavigate()
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState<string | null>(null)
 
   const handleRemove = (id: string) => {
     removeFromSelected(id)
@@ -38,11 +40,14 @@ export function CartButton() {
   }
 
   const handleStartWriting = (idea: SelectedIdea) => {
+    createWriting(idea)
+    setDialogOpen(null)
+    setSheetOpen(false)
     navigate(`/writing/${idea.id}`)
   }
 
   return (
-    <Sheet>
+    <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
       <SheetTrigger asChild>
         <Button variant="outline" size="icon" className="relative">
           <ShoppingCart className="h-5 w-5" />
@@ -71,7 +76,7 @@ export function CartButton() {
                 className="relative bg-muted p-4 rounded-lg"
               >
                 <div className="absolute top-2 right-2 flex gap-2">
-                  <Dialog>
+                  <Dialog open={dialogOpen === idea.id} onOpenChange={(open) => setDialogOpen(open ? idea.id : null)}>
                     <DialogTrigger asChild>
                       <Button variant="ghost" size="icon">
                         <Pencil className="h-4 w-4" />

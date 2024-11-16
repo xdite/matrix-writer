@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { Topic, Style, Idea, MatrixCell, SelectedIdea } from '../types'
+import { Topic, Style, Idea, MatrixCell, SelectedIdea, Writing } from '../types'
 
 interface MatrixContextType {
   topics: Topic[]
   styles: Style[]
   ideas: Idea[]
   selectedIdeas: SelectedIdea[]
+  writings: Writing[]
   addTopic: (topic: Omit<Topic, 'id'>) => void
   addStyle: (style: Omit<Style, 'id'>) => void
   addIdea: (idea: Omit<Idea, 'id' | 'createdAt'>) => void
@@ -13,26 +14,39 @@ interface MatrixContextType {
   addToSelected: (idea: Idea, topic: string, style: string) => void
   removeFromSelected: (id: string) => void
   clearSelected: () => void
+  createWriting: (selectedIdea: SelectedIdea) => void
+  updateWriting: (id: string, text: string) => void
+  getWriting: (id: string) => Writing | undefined
+  deleteWriting: (id: string) => void
 }
 
 const MatrixContext = createContext<MatrixContextType | undefined>(undefined)
 
-const STORAGE_KEY = 'matrix-writer-selected-ideas'
+const STORAGE_KEY = {
+  SELECTED_IDEAS: 'matrix-writer-selected-ideas',
+  WRITINGS: 'matrix-writer-writings'
+}
 
 export function MatrixProvider({ children }: { children: React.ReactNode }) {
   const [topics, setTopics] = useState<Topic[]>([])
   const [styles, setStyles] = useState<Style[]>([])
   const [ideas, setIdeas] = useState<Idea[]>([])
   const [selectedIdeas, setSelectedIdeas] = useState<SelectedIdea[]>(() => {
-    // 從 localStorage 讀取已保存的點子
-    const saved = localStorage.getItem(STORAGE_KEY)
+    const saved = localStorage.getItem(STORAGE_KEY.SELECTED_IDEAS)
+    return saved ? JSON.parse(saved) : []
+  })
+  const [writings, setWritings] = useState<Writing[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY.WRITINGS)
     return saved ? JSON.parse(saved) : []
   })
 
-  // 當 selectedIdeas 改變時，自動保存到 localStorage
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedIdeas))
+    localStorage.setItem(STORAGE_KEY.SELECTED_IDEAS, JSON.stringify(selectedIdeas))
   }, [selectedIdeas])
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY.WRITINGS, JSON.stringify(writings))
+  }, [writings])
 
   const addTopic = (topic: Omit<Topic, 'id'>) => {
     setTopics(prev => [...prev, { ...topic, id: crypto.randomUUID() }])
@@ -78,19 +92,55 @@ export function MatrixProvider({ children }: { children: React.ReactNode }) {
     setSelectedIdeas([])
   }
 
+  const createWriting = (selectedIdea: SelectedIdea) => {
+    const newWriting: Writing = {
+      id: selectedIdea.id,
+      content: selectedIdea.content,
+      topic: selectedIdea.topic,
+      style: selectedIdea.style,
+      text: '',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    setWritings(prev => [...prev, newWriting])
+    // 可選：從 selectedIdeas 中移除
+    // setSelectedIdeas(prev => prev.filter(idea => idea.id !== selectedIdea.id))
+  }
+
+  const updateWriting = (id: string, text: string) => {
+    setWritings(prev => prev.map(writing => 
+      writing.id === id 
+        ? { ...writing, text, updatedAt: new Date() }
+        : writing
+    ))
+  }
+
+  const getWriting = (id: string) => {
+    return writings.find(writing => writing.id === id)
+  }
+
+  const deleteWriting = (id: string) => {
+    setWritings(prev => prev.filter(writing => writing.id !== id))
+  }
+
   return (
     <MatrixContext.Provider value={{
       topics,
       styles,
       ideas,
       selectedIdeas,
+      writings,
       addTopic,
       addStyle,
       addIdea,
       getIdeasForCell,
       addToSelected,
       removeFromSelected,
-      clearSelected
+      clearSelected,
+      createWriting,
+      updateWriting,
+      getWriting,
+      deleteWriting
     }}>
       {children}
     </MatrixContext.Provider>
