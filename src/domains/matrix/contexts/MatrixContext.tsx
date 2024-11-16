@@ -1,14 +1,18 @@
 import React, { createContext, useContext, useState } from 'react'
-import { Topic, Style, Idea, MatrixCell } from '../types'
+import { Topic, Style, Idea, MatrixCell, SelectedIdea } from '../types'
 
 interface MatrixContextType {
   topics: Topic[]
   styles: Style[]
   ideas: Idea[]
+  selectedIdeas: SelectedIdea[]
   addTopic: (topic: Omit<Topic, 'id'>) => void
   addStyle: (style: Omit<Style, 'id'>) => void
   addIdea: (idea: Omit<Idea, 'id' | 'createdAt'>) => void
   getIdeasForCell: (topicId: string, styleId: string) => Idea[]
+  addToSelected: (idea: Idea, topic: string, style: string) => void
+  removeFromSelected: (id: string) => void
+  clearSelected: () => void
 }
 
 const MatrixContext = createContext<MatrixContextType | undefined>(undefined)
@@ -17,6 +21,7 @@ export function MatrixProvider({ children }: { children: React.ReactNode }) {
   const [topics, setTopics] = useState<Topic[]>([])
   const [styles, setStyles] = useState<Style[]>([])
   const [ideas, setIdeas] = useState<Idea[]>([])
+  const [selectedIdeas, setSelectedIdeas] = useState<SelectedIdea[]>([])
 
   const addTopic = (topic: Omit<Topic, 'id'>) => {
     setTopics(prev => [...prev, { ...topic, id: crypto.randomUUID() }])
@@ -40,15 +45,37 @@ export function MatrixProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
+  const addToSelected = (idea: Idea, topic: string, style: string) => {
+    setSelectedIdeas(prev => [...prev, {
+      id: idea.id,
+      content: idea.content,
+      topic,
+      style,
+      addedAt: new Date()
+    }])
+  }
+
+  const removeFromSelected = (id: string) => {
+    setSelectedIdeas(prev => prev.filter(idea => idea.id !== id))
+  }
+
+  const clearSelected = () => {
+    setSelectedIdeas([])
+  }
+
   return (
     <MatrixContext.Provider value={{
       topics,
       styles,
       ideas,
+      selectedIdeas,
       addTopic,
       addStyle,
       addIdea,
-      getIdeasForCell
+      getIdeasForCell,
+      addToSelected,
+      removeFromSelected,
+      clearSelected
     }}>
       {children}
     </MatrixContext.Provider>

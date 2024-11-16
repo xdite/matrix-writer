@@ -7,6 +7,7 @@ import { useMatrix } from '../../contexts/MatrixContext'
 import { generateIdeasWithClaude } from '@/services/claude'
 import { useToast } from '@/components/ui/use-toast'
 import { Badge } from '@/components/ui/badge'
+import { Plus } from 'lucide-react'
 
 const THEMES = {
   general: ['生活習慣', '生產力', '個人成長', '理財知識', '時間管理'],
@@ -48,7 +49,7 @@ const STYLES = [
     example: '來自 Sean McCabe 演講的 3 點啟發'
   },
   {
-    name: 'Interview leaders (訪談文)',
+    name: 'Interview leaders (訪文)',
     example: '訪談 XXX 對於 OO 產業的看法'
   },
   {
@@ -94,7 +95,14 @@ const STYLES = [
 ]
 
 export function ContentMatrixGenerator() {
-  const { addTopic, addStyle, addIdea } = useMatrix()
+  const { 
+    addTopic, 
+    addStyle, 
+    addIdea, 
+    addToSelected,
+    topics,
+    styles
+  } = useMatrix()
   const [selectedTheme, setSelectedTheme] = useState('')
   const [selectedStyle, setSelectedStyle] = useState('')
   const [generatedIdeas, setGeneratedIdeas] = useState<string[]>([])
@@ -141,6 +149,32 @@ export function ContentMatrixGenerator() {
     } finally {
       setIsGenerating(false)
     }
+  }
+
+  const handleAddToSelected = (idea: string) => {
+    if (!topics.length || !styles.length) {
+      toast({
+        title: "錯誤",
+        description: "無法加入清單，請先生成點子",
+        variant: "destructive"
+      })
+      return
+    }
+
+    const newIdea = {
+      id: crypto.randomUUID(),
+      content: idea,
+      topicId: topics[topics.length - 1].id,
+      styleId: styles[styles.length - 1].id,
+      createdAt: new Date()
+    }
+    
+    addToSelected(newIdea, customTopic, selectedStyle)
+    
+    toast({
+      title: "已加入清單",
+      description: "點子已加入寫作清單",
+    })
   }
 
   return (
@@ -262,16 +296,25 @@ export function ContentMatrixGenerator() {
 
             <div className="space-y-3">
               {generatedIdeas.map((idea, index) => (
-                <div key={index} className="p-4 bg-gray-100 rounded-lg">
-           
-                  <div className="text-sm">
+                <div key={index} className="p-4 bg-gray-100 rounded-lg relative">
+                  <div className="text-sm pr-24">
                     {index + 1}. {idea}
-
-                    <Badge variant="secondary ">{customTopic}</Badge>
-                    <Badge variant="outline ">
-                      {STYLES.find(s => s.name === selectedStyle)?.name.split(' ')[0]}
-                    </Badge>
+                    <div className="mt-2">
+                      <Badge variant="secondary">{customTopic}</Badge>
+                      <Badge variant="outline">
+                        {STYLES.find(s => s.name === selectedStyle)?.name.split(' ')[0]}
+                      </Badge>
+                    </div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                    onClick={() => handleAddToSelected(idea)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    加入清單
+                  </Button>
                 </div>
               ))}
             </div>
