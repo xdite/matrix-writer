@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useState, useEffect } from 'react'
 import { Topic, Style, Idea, MatrixCell, SelectedIdea } from '../types'
 
 interface MatrixContextType {
@@ -17,11 +17,22 @@ interface MatrixContextType {
 
 const MatrixContext = createContext<MatrixContextType | undefined>(undefined)
 
+const STORAGE_KEY = 'matrix-writer-selected-ideas'
+
 export function MatrixProvider({ children }: { children: React.ReactNode }) {
   const [topics, setTopics] = useState<Topic[]>([])
   const [styles, setStyles] = useState<Style[]>([])
   const [ideas, setIdeas] = useState<Idea[]>([])
-  const [selectedIdeas, setSelectedIdeas] = useState<SelectedIdea[]>([])
+  const [selectedIdeas, setSelectedIdeas] = useState<SelectedIdea[]>(() => {
+    // 從 localStorage 讀取已保存的點子
+    const saved = localStorage.getItem(STORAGE_KEY)
+    return saved ? JSON.parse(saved) : []
+  })
+
+  // 當 selectedIdeas 改變時，自動保存到 localStorage
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedIdeas))
+  }, [selectedIdeas])
 
   const addTopic = (topic: Omit<Topic, 'id'>) => {
     setTopics(prev => [...prev, { ...topic, id: crypto.randomUUID() }])
@@ -46,6 +57,10 @@ export function MatrixProvider({ children }: { children: React.ReactNode }) {
   }
 
   const addToSelected = (idea: Idea, topic: string, style: string) => {
+    // 檢查是否已經存在相同的點子
+    const exists = selectedIdeas.some(selected => selected.id === idea.id)
+    if (exists) return
+
     setSelectedIdeas(prev => [...prev, {
       id: idea.id,
       content: idea.content,
