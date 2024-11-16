@@ -40,6 +40,8 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
       editor.state.selection.to
     )
     setSelectedText(text)
+    setCommand('')
+    setSuggestion('')
     setIsOpen(true)
     
     // 取消選取
