@@ -1,5 +1,5 @@
 import { Editor, BubbleMenu } from '@tiptap/react'
-import { Bold, Italic, Code, Quote, Wand2, X, Copy, Check } from 'lucide-react'
+import { Bold, Italic, Code, Quote, Wand2, X, Copy, Check, ArrowLeftToLine } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useState, useRef, useEffect } from 'react'
@@ -149,16 +149,12 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
       const buttonGroup = document.createElement('div')
       buttonGroup.className = 'absolute right-2 top-2 flex gap-2'
       
-      // 插入按鈕
+      // 修改插入按鈕，使用 << 符號
       const insertButton = document.createElement('button')
-      insertButton.className = 'p-2 rounded-md bg-white hover:bg-gray-100 transition-all'
+      insertButton.className = 'p-2 rounded-md bg-white hover:bg-gray-100 transition-all font-mono font-medium'
       insertButton.setAttribute('data-index', index.toString())
       insertButton.setAttribute('data-action', 'insert')
-      insertButton.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 5v14M5 12h14"/>
-        </svg>
-      `
+      insertButton.innerHTML = '<<'
 
       // 複製按鈕
       const copyButton = document.createElement('button')
@@ -331,22 +327,12 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
                     <div className="animate-pulse text-sm">AI 正在思考中...</div>
                   )}
                   {suggestion && (
-                    <>
-                      <div 
-                        dangerouslySetInnerHTML={{ 
-                          __html: renderWithCopyButton(suggestion)
-                        }}
-                        className="prose max-w-none prose-pre:whitespace-pre-wrap prose-pre:break-words prose-pre:text-base prose-pre:leading-relaxed prose-headings:text-base prose-headings:font-medium prose-pre:relative prose-pre:p-4"
-                      />
-                      <div className="mt-6 pt-4 border-t">
-                        <Button
-                          onClick={handleApplySuggestion}
-                          className="w-full"
-                        >
-                          套用建議
-                        </Button>
-                      </div>
-                    </>
+                    <div 
+                      dangerouslySetInnerHTML={{ 
+                        __html: renderWithCopyButton(suggestion)
+                      }}
+                      className="prose max-w-none prose-pre:whitespace-pre-wrap prose-pre:break-words prose-pre:text-base prose-pre:leading-relaxed prose-headings:text-base prose-headings:font-medium prose-pre:relative prose-pre:p-4"
+                    />
                   )}
                 </div>
               </div>
