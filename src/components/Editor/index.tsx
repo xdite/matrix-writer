@@ -21,7 +21,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { SelectionMenu } from './SelectionMenu'
-import { useEffect } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
+import { debounce } from 'lodash'
 
 const lowlight = createLowlight(common)
 
@@ -80,6 +81,17 @@ interface EditorProps {
 }
 
 export function Editor({ value, onChange, onSave }: EditorProps) {
+  const previousValueRef = useRef(value)
+  const updateTimeoutRef = useRef<number>()
+
+  // 建立防抖的 onChange 處理器
+  const debouncedOnChange = useMemo(
+    () => debounce((html: string) => {
+      onChange(html)
+    }, 300),
+    [onChange]
+  )
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -101,14 +113,39 @@ export function Editor({ value, onChange, onSave }: EditorProps) {
       },
     },
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML())
+      // 清除之前的 timeout
+      if (updateTimeoutRef.current) {
+        window.clearTimeout(updateTimeoutRef.current)
+      }
+
+      // 設定新的 timeout 來延遲更新
+      updateTimeoutRef.current = window.setTimeout(() => {
+        const newContent = editor.getHTML()
+        if (newContent !== value) {
+          debouncedOnChange(newContent)
+        }
+      }, 100)
     },
   })
 
+  // 清理防抖
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
-      console.log('Updating editor content:', value)
+    return () => {
+      debouncedOnChange.cancel()
+      if (updateTimeoutRef.current) {
+        window.clearTimeout(updateTimeoutRef.current)
+      }
+    }
+  }, [debouncedOnChange])
+
+  // 優化 content 更新邏輯
+  useEffect(() => {
+    if (editor && value !== previousValueRef.current) {
+      const selection = editor.state.selection
       editor.commands.setContent(value, false)
+      // 嘗試保持光標位置
+      editor.commands.setTextSelection(selection.from)
+      previousValueRef.current = value
     }
   }, [value, editor])
 
