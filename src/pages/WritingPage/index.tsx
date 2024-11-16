@@ -12,6 +12,7 @@ export function WritingPage() {
   const navigate = useNavigate()
   const { getWriting, updateWriting } = useMatrix()
   const [text, setText] = useState('')
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving'>('saved')
   
   const writing = getWriting(id!)
   
@@ -39,7 +40,15 @@ export function WritingPage() {
 
   const handleTextChange = (newText: string) => {
     setText(newText)
+    setSaveStatus('saving')
     updateWriting(writing.id, newText)
+    
+    // 延遲顯示保存狀態
+    const timer = setTimeout(() => {
+      setSaveStatus('saved')
+    }, 1000)
+
+    return () => clearTimeout(timer)
   }
 
   return (
@@ -50,9 +59,14 @@ export function WritingPage() {
           返回文章列表
         </Button>
         <div className="flex-1" />
-        <div className="flex gap-2">
-          <Badge variant="secondary">{writing.topic}</Badge>
-          <Badge variant="outline">{writing.style}</Badge>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-muted-foreground">
+            {saveStatus === 'saving' ? '儲存中...' : '已儲存'}
+          </span>
+          <div className="flex gap-2">
+            <Badge variant="secondary">{writing.topic}</Badge>
+            <Badge variant="outline">{writing.style}</Badge>
+          </div>
         </div>
       </div>
 
