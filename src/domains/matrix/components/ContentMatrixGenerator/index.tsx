@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { useMatrix } from '../../contexts/MatrixContext'
-import { generateIdeasWithClaude } from '@/services/claude'
+import { ideaService } from '../../services/ideaService'
 import { useToast } from '@/components/ui/use-toast'
 import { Badge } from '@/components/ui/badge'
 import { Plus } from 'lucide-react'
@@ -116,6 +116,16 @@ export function ContentMatrixGenerator() {
     setIsGenerating(true)
 
     try {
+      const ideaCount = Number(localStorage.getItem('ideaCount') || '10')
+      const ideas = await ideaService.generateIdeas(
+        customTopic,
+        selectedTheme,
+        selectedStyle,
+        ideaCount
+      )
+      
+      setGeneratedIdeas(ideas)
+
       const topic = {
         name: customTopic,
         category: 'general' as const,
@@ -129,9 +139,6 @@ export function ContentMatrixGenerator() {
       }
       addStyle(style)
 
-      const ideas = await generateIdeasWithClaude(customTopic, selectedTheme, selectedStyle)
-      setGeneratedIdeas(ideas)
-
       ideas.forEach(content => {
         addIdea({
           topicId: topic.id,
@@ -139,6 +146,7 @@ export function ContentMatrixGenerator() {
           content
         })
       })
+
     } catch (error) {
       console.error('Error:', error)
       toast({

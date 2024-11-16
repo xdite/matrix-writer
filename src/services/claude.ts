@@ -1,10 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { generatePrompt } from '@/domains/matrix/hooks/useClaudePrompt'
-import { processIdeas } from '@/domains/matrix/hooks/useClaudeIdeas'
 
-export async function generateIdeasWithClaude(topic: string, theme: string, style: string) {
+export async function generateIdeasWithClaude(prompt: string) {
   const apiKey = localStorage.getItem('claudeApiKey')
-  const ideaCount = Number(localStorage.getItem('ideaCount') || '10')
   
   if (!apiKey) {
     console.log('API Key missing in localStorage')
@@ -12,7 +9,6 @@ export async function generateIdeasWithClaude(topic: string, theme: string, styl
   }
   
   console.log('Using API Key:', apiKey.substring(0, 8) + '...')
-  console.log('Generating ideas for:', { topic, theme, style, ideaCount })
 
   const anthropic = new Anthropic({
     apiKey: apiKey,
@@ -28,17 +24,13 @@ export async function generateIdeasWithClaude(topic: string, theme: string, styl
       messages: [
         {
           role: 'user',
-          content: generatePrompt(topic, theme, style, ideaCount)
+          content: prompt
         }
       ]
     })
     
     console.log('Received response:', response)
-
-    const ideas = processIdeas(response, ideaCount)
-    console.log('Processed ideas:', ideas)
-    
-    return ideas
+    return response
 
   } catch (error: unknown) {
     console.error('Detailed error:', {
