@@ -46,9 +46,11 @@ export async function generateIdeasWithClaude(prompt: string, options: ClaudeOpt
 
       let fullContent = ''
       for await (const chunk of response) {
-        const content = chunk.content[0]?.text || ''
-        fullContent += content
-        options.onStream?.(content)
+        if (chunk.type === 'content_block_delta') {
+          const content = chunk.delta?.text || ''
+          fullContent += content
+          options.onStream?.(content)
+        }
       }
 
       return {
@@ -69,7 +71,9 @@ export async function generateIdeasWithClaude(prompt: string, options: ClaudeOpt
       })
       
       console.log('Received response:', response)
-      return response
+      return {
+        content: [{ text: response.content[0].text }]
+      }
     }
 
   } catch (error: unknown) {

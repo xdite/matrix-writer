@@ -9,6 +9,7 @@ import { Editor } from '@/components/Editor'
 import { useToast } from '@/components/ui/use-toast'
 import { Writing } from '@/domains/matrix/types'
 import { StyleGuideDrawer } from '@/components/StyleGuideDrawer'
+import { writingService } from '@/domains/matrix/services/writingService'
 
 export function WritingPage() {
   const { id } = useParams()
@@ -20,6 +21,8 @@ export function WritingPage() {
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
   const [writing, setWriting] = useState<Writing | undefined>()
   const [isLoading, setIsLoading] = useState(true)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generatedText, setGeneratedText] = useState('')
   
   useEffect(() => {
     const loadWriting = async () => {
@@ -94,6 +97,43 @@ export function WritingPage() {
     }
   }
 
+  const handleGenerateArticle = async () => {
+    if (!writing) return
+    
+    setIsGenerating(true)
+    setText('')
+    
+    try {
+      await writingService.generateArticle(
+        writing.topic,
+        writing.style,
+        writing.content,
+        (content) => {
+          setText(prev => {
+            const newText = prev + content
+            console.log('Current editor content:', newText)
+            return newText
+          })
+        }
+      )
+      
+      setIsDirty(true)
+      toast({
+        title: "生成完成",
+        description: "AI 已完成文章生成",
+      })
+    } catch (error) {
+      console.error('Error:', error)
+      toast({
+        title: "生成失敗",
+        description: "無法生成文章，請稍後再試",
+        variant: "destructive"
+      })
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center gap-4 mb-8">
@@ -124,7 +164,20 @@ export function WritingPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <Editor value={text} onChange={handleTextChange} />
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-end">
+              <Button
+                onClick={handleGenerateArticle}
+                disabled={isGenerating}
+              >
+                {isGenerating ? "生成中..." : "AI 寫作"}
+              </Button>
+            </div>
+            <Editor 
+              value={text} 
+              onChange={handleTextChange} 
+            />
+          </div>
         </CardContent>
         <CardFooter className="flex items-center justify-between py-4 px-6 border-t bg-muted/50">
           <div className="text-sm text-muted-foreground">
