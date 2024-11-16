@@ -60,18 +60,16 @@ export class WritingService {
       const response = await generateIdeasWithClaude(prompt, {
         config: this.config,
         onStream: (content) => {
-          //console.log('Received chunk:', content)
           fullContent += content
-          
-          // 每次都重新渲染完整的 markdown
           const renderedHtml = marked(fullContent, { breaks: true })
           onProgress?.(renderedHtml)
         }
       })
 
-      // 最後返回原始的 markdown 文本
-      console.log('Final generated text:', fullContent)
-      return fullContent
+      // Remove the first line from the final content
+      const processedContent = fullContent.replace(/^.+?[\r\n]/, '')
+      console.log('Final generated text:', processedContent)
+      return processedContent
     } catch (error) {
       console.error('Error generating article:', error)
       throw error

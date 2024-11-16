@@ -23,6 +23,7 @@ export function WritingPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedText, setGeneratedText] = useState('')
+  const editorRef = React.useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const loadWriting = async () => {
@@ -109,7 +110,16 @@ export function WritingPage() {
         writing.style,
         writing.content,
         (content) => {
-          setText(content)
+          const processedContent = content.replace(/^.+?[\r\n]/, '')
+          setText(processedContent)
+          if (editorRef.current) {
+            setTimeout(() => {
+              editorRef.current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'end'
+              })
+            }, 100)
+          }
         }
       )
 
@@ -143,11 +153,11 @@ export function WritingPage() {
 
       <Card className="mb-4">
         <CardContent className="pt-2">
-          <div className="flex items-center justify-between mb-4">
-            <div className="font-medium text-muted-foreground">
-              寫作主題：
+          <div className="flex items-center justify-between gap-4 mb-4 mt-4">
+            <div className="prose prose-lg max-w-none flex-1">
+              <p className="text-lg font-medium m-0">{writing.content}</p>
             </div>
-            <div className="flex items-center gap-4 mt-4">
+            <div className="flex items-center gap-4">
               <Button
                 onClick={handleGenerateArticle}
                 disabled={isGenerating}
@@ -164,19 +174,18 @@ export function WritingPage() {
               <StyleGuideDrawer style={writing.style} />
             </div>
           </div>
-          <div className="prose prose-sm max-w-none">
-            <p>{writing.content}</p>
-          </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardContent className="pt-6">
-          <Editor
-            key={text}
-            value={text}
-            onChange={handleTextChange}
-          />
+          <div ref={editorRef}>
+            <Editor
+              key={text}
+              value={text}
+              onChange={handleTextChange}
+            />
+          </div>
         </CardContent>
         <CardFooter className="flex items-center justify-between py-4 px-6 border-t bg-muted/50">
           <div className="text-sm text-muted-foreground">
