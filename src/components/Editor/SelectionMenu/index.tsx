@@ -12,6 +12,22 @@ interface SelectionMenuProps {
   editor: Editor
 }
 
+// Add preset commands
+const PRESET_COMMANDS = [
+  {
+    label: '擴寫 200 字',
+    command: '請幫我將選取的文字擴寫成 200 字左右的段落，保持原意但更詳細。'
+  },
+  {
+    label: '更吸引人', 
+    command: '請幫我改寫這段文字，讓它更吸引人、更有說服力，但保持原意。'
+  },
+  {
+    label: '改寫承接上下文',
+    command: '請幫我改寫這段文字，讓它能更好地承接上下文，使文章更連貫流暢。'
+  }
+]
+
 export function SelectionMenu({ editor }: SelectionMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [command, setCommand] = useState('')
@@ -215,6 +231,25 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
     return result
   }
 
+  // Add keyboard shortcut handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isOpen || !selectedText) return
+      
+      if (e.altKey && e.key >= '1' && e.key <= '3') {
+        e.preventDefault()
+        const index = parseInt(e.key) - 1
+        const preset = PRESET_COMMANDS[index]
+        if (preset) {
+          setCommand(preset.command)
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, selectedText])
+
   return (
     <>
       <BubbleMenu 
@@ -280,12 +315,10 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
       </BubbleMenu>
 
       {/* Sidebar Chat */}
-      <div
-        className={cn(
-          "fixed right-0 top-0 h-screen w-[500px] bg-white shadow-lg transform transition-transform duration-200 ease-in-out border-l",
-          isOpen ? "translate-x-0" : "translate-x-full"
-        )}
-      >
+      <div className={cn(
+        "fixed right-0 top-0 h-screen w-[500px] bg-white shadow-lg transform transition-transform duration-200 ease-in-out border-l",
+        isOpen ? "translate-x-0" : "translate-x-full"
+      )}>
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b">
@@ -300,10 +333,7 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
           </div>
 
           {/* Content */}
-          <div 
-            ref={chatContentRef}
-            className="flex-1 overflow-auto p-6 space-y-4 scroll-smooth"
-          >
+          <div ref={chatContentRef} className="flex-1 overflow-auto p-6 space-y-4 scroll-smooth">
             {selectedText && (
               <div className="p-4 bg-muted rounded-md">
                 <div className="text-sm text-muted-foreground mb-2">選取的文字：</div>
@@ -311,7 +341,24 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
               </div>
             )}
 
-            <div className="space-y-2">
+            {/* 改為並排的預設命令按鈕 */}
+            <div className="grid grid-cols-3 gap-2">
+              {PRESET_COMMANDS.map((preset, index) => (
+                <Button
+                  key={index}
+                  variant="outline" 
+                  className="h-auto py-2 border-2"
+                  onClick={() => {
+                    setCommand(preset.command)
+                  }}
+                  disabled={isLoading}
+                >
+                  {preset.label}
+                </Button>
+              ))}
+            </div>
+              
+            <div className="relative mt-4">
               <Textarea
                 placeholder="輸入你想要的建議，例如：幫我改寫得更生動..."
                 value={command}
@@ -320,7 +367,7 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
                 className="text-base resize-none"
               />
               <Button
-                className="w-full"
+                className="w-full mt-2"
                 onClick={handleAIAssist}
                 disabled={isLoading || !command.trim()}
               >
