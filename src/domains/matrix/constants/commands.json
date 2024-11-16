@@ -16,6 +16,11 @@
         "category": "expand"
     },    
     {
+        "label": "寫上一段",
+        "command": "這段接不起來上一段，幫我填充上一段去銜接。",
+        "category": "expand"
+    },      
+    {
       "label": "加入例子",
       "command": "請幫我在這段文字中加入 2-3 個具體的例子來支持論點。",
       "category": "expand"
@@ -30,6 +35,11 @@
       "command": "請幫我調整這段文字的語氣，使其更生動活潑，增加感情色彩。",
       "category": "refine"
     },
+    {
+        "label": "改寫小標",
+        "command": "請幫我調整這個標題，更適合上下文。",
+        "category": "refine"
+      },    
     {
       "label": "突出重點",
       "command": "請幫我重寫這段文字，使核心觀點更加突出和清晰。",

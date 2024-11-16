@@ -33,20 +33,26 @@ export class TextAssistantService {
     return `
 請根據以下資訊給出建議：
 
-用戶指令：${command}
-
-選中的文字：
-${selectedText}
 
 完整文章：
+<fulltext>
 ${fullText}
+</fulltext>
+選中的文字：
+<selected>
+${selectedText}
+</selected>
 
+<instruction>
 請給出具體的修改建議，包括：
 * 提供具體的改進建議
-* 如果適合的話，提供 2-3 個可能的改寫版本
+* 如果適合的話，提供 2-3 個可能的改寫版本，每個版本至少 500 字。
 * 需要考慮上下文，否則承接生硬
 
 請使用繁體中文回答。使用 Markdown 格式。
+
+用戶指令：${command}
+</instruction>
 `
   }
 
