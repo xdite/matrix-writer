@@ -1,4 +1,5 @@
 import { generateIdeasWithClaude } from '@/services/claude'
+import { marked } from 'marked'
 
 interface TextAssistRequest {
   command: string
@@ -19,7 +20,7 @@ export class TextAssistantService {
     model: 'claude-3-5-sonnet-20241022',
     maxTokens: 1000,
     temperature: 0.7,
-    stream: false,
+    stream: true,
     systemPrompt: `你是一位專業的寫作助手，擅長：
 1. 根據用戶的需求提供具體的寫作建議
 2. 分析文章的優缺點
@@ -45,19 +46,26 @@ ${fullText}
 2. 提供具體的改進建議
 3. 如果適合的話，提供 2-3 個可能的改寫版本
 
-請使用繁體中文回答。
+請使用繁體中文回答。使用 Markdown 格式。
 `
   }
 
-  async getAssistance({ command, selectedText, fullText }: TextAssistRequest) {
+  async getAssistance({ command, selectedText, fullText }: TextAssistRequest, onProgress?: (content: string) => void) {
     const prompt = this.generatePrompt(command, selectedText, fullText)
     
     try {
+      let fullContent = ''
+      
       const response = await generateIdeasWithClaude(prompt, {
-        config: this.config
+        config: this.config,
+        onStream: (content) => {
+          fullContent += content
+          const renderedHtml = marked(fullContent, { breaks: true })
+          onProgress?.(renderedHtml)
+        }
       })
       
-      return response
+      return fullContent
     } catch (error) {
       console.error('Error getting AI assistance:', error)
       throw error

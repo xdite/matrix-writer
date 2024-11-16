@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useState } from 'react'
 import { textAssistantService } from '@/domains/matrix/services/textAssistantService'
 import { useToast } from '@/components/ui/use-toast'
+import { marked } from 'marked'
 
 interface SelectionMenuProps {
   editor: Editor
@@ -14,7 +15,9 @@ interface SelectionMenuProps {
 export function SelectionMenu({ editor }: SelectionMenuProps) {
   const [open, setOpen] = useState(false)
   const [command, setCommand] = useState('')
+  const [selectedText, setSelectedText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [suggestion, setSuggestion] = useState('')
   const { toast } = useToast()
 
   if (!editor) {
@@ -30,6 +33,12 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
   }
 
   const handleOpenAIDialog = () => {
+    const text = editor.state.doc.textBetween(
+      editor.state.selection.from,
+      editor.state.selection.to
+    )
+    setSelectedText(text)
+    
     editor.commands.setTextSelection({
       from: editor.state.selection.from,
       to: editor.state.selection.from
@@ -40,22 +49,19 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
   const handleAIAssist = async () => {
     try {
       setIsLoading(true)
-      const selectedText = editor.state.doc.textBetween(
-        editor.state.selection.from,
-        editor.state.selection.to
-      )
+      setSuggestion('')
       const fullText = editor.state.doc.textContent
 
-      const response = await textAssistantService.getAssistance({
-        command,
-        selectedText,
-        fullText
-      })
-
-      toast({
-        title: "AI 建議",
-        description: response,
-      })
+      await textAssistantService.getAssistance(
+        {
+          command,
+          selectedText,
+          fullText
+        },
+        (content) => {
+          setSuggestion(content)
+        }
+      )
     } catch (error) {
       toast({
         title: "發生錯誤",
@@ -64,9 +70,19 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
       })
     } finally {
       setIsLoading(false)
-      setOpen(false)
-      setCommand('')
     }
+  }
+
+  const handleApplySuggestion = () => {
+    const tempDiv = document.createElement('div')
+    tempDiv.innerHTML = suggestion
+    const plainText = tempDiv.textContent || ''
+
+    editor.commands.insertContent(plainText)
+    
+    setOpen(false)
+    setCommand('')
+    setSuggestion('')
   }
 
   return (
@@ -136,32 +152,68 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-          <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[90vw] max-w-[450px] bg-white rounded-lg p-6">
+          <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[90vw] max-w-[600px] max-h-[85vh] bg-white rounded-lg p-6 overflow-hidden flex flex-col">
             <Dialog.Title className="text-lg font-medium mb-4">
               AI 寫作建議
             </Dialog.Title>
             
-            <div className="space-y-4">
+            <div className="space-y-4 flex-1 overflow-hidden">
+              {selectedText && (
+                <div className="p-3 bg-muted rounded-md">
+                  <div className="text-sm text-muted-foreground mb-2">選取的文字：</div>
+                  <div className="text-sm">{selectedText}</div>
+                </div>
+              )}
+              
               <Textarea
                 placeholder="輸入你想要的建議，例如：幫我改寫得更生動..."
                 value={command}
                 onChange={(e) => setCommand(e.target.value)}
-                rows={4}
+                rows={3}
               />
+
+              {(isLoading || suggestion) && (
+                <div className="flex-1 overflow-auto">
+                  <div className="p-4 bg-muted rounded-md prose prose-sm max-w-none">
+                    {isLoading && !suggestion && (
+                      <div className="animate-pulse">AI 正在思考中...</div>
+                    )}
+                    {suggestion && (
+                      <div 
+                        dangerouslySetInnerHTML={{ __html: suggestion }}
+                        className="overflow-auto max-h-[300px]"
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
               
-              <div className="flex justify-end gap-3">
+              <div className="flex justify-end gap-3 pt-4 border-t">
                 <Button
                   variant="outline"
-                  onClick={() => setOpen(false)}
+                  onClick={() => {
+                    setOpen(false)
+                    setSuggestion('')
+                    setCommand('')
+                  }}
                 >
                   取消
                 </Button>
-                <Button
-                  onClick={handleAIAssist}
-                  disabled={isLoading || !command.trim()}
-                >
-                  {isLoading ? "處理中..." : "取得建議"}
-                </Button>
+                {!suggestion && (
+                  <Button
+                    onClick={handleAIAssist}
+                    disabled={isLoading || !command.trim()}
+                  >
+                    {isLoading ? "處理中..." : "取得建議"}
+                  </Button>
+                )}
+                {suggestion && (
+                  <Button
+                    onClick={handleApplySuggestion}
+                  >
+                    套用建議
+                  </Button>
+                )}
               </div>
             </div>
           </Dialog.Content>
