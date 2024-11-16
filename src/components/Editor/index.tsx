@@ -48,6 +48,30 @@ const PreventContextMenu = Extension.create({
   }
 })
 
+const CustomKeymap = Extension.create({
+  name: 'customKeymap',
+
+  addKeyboardShortcuts() {
+    return {
+      // Undo
+      'Mod-z': () => {
+        this.editor.commands.undo()
+        return true
+      },
+      // Redo 
+      'Mod-Shift-z': () => {
+        this.editor.commands.redo()
+        return true
+      },
+      // Windows 上的 Ctrl+Y 也可以 redo
+      'Mod-y': () => {
+        this.editor.commands.redo()
+        return true
+      },
+    }
+  },
+})
+
 interface EditorProps {
   value: string
   onChange: (value: string) => void
@@ -65,7 +89,8 @@ export function Editor({ value, onChange }: EditorProps) {
       CodeBlockLowlight.configure({
         lowlight,
       }),
-      PreventContextMenu, // 添加新的 extension
+      PreventContextMenu,
+      CustomKeymap,
     ],
     content: value,
     editorProps: {
