@@ -152,16 +152,16 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-          <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[90vw] max-w-[600px] max-h-[85vh] bg-white rounded-lg p-6 overflow-hidden flex flex-col">
-            <Dialog.Title className="text-lg font-medium mb-4">
+          <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[90vw] max-w-[800px] max-h-[90vh] bg-white rounded-lg p-6 overflow-hidden flex flex-col">
+            <Dialog.Title className="text-xl font-medium mb-4">
               AI 寫作建議
             </Dialog.Title>
             
             <div className="space-y-4 flex-1 overflow-hidden">
               {selectedText && (
-                <div className="p-3 bg-muted rounded-md">
+                <div className="p-4 bg-muted rounded-md">
                   <div className="text-sm text-muted-foreground mb-2">選取的文字：</div>
-                  <div className="text-sm">{selectedText}</div>
+                  <div className="text-base">{selectedText}</div>
                 </div>
               )}
               
@@ -170,18 +170,19 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
                 value={command}
                 onChange={(e) => setCommand(e.target.value)}
                 rows={3}
+                className="text-base"
               />
 
               {(isLoading || suggestion) && (
                 <div className="flex-1 overflow-auto">
-                  <div className="p-4 bg-muted rounded-md prose prose-sm max-w-none">
+                  <div className="p-6 bg-muted rounded-md prose prose-lg max-w-none">
                     {isLoading && !suggestion && (
                       <div className="animate-pulse">AI 正在思考中...</div>
                     )}
                     {suggestion && (
                       <div 
                         dangerouslySetInnerHTML={{ __html: suggestion }}
-                        className="overflow-auto max-h-[300px]"
+                        className="overflow-auto max-h-[50vh]"
                       />
                     )}
                   </div>
