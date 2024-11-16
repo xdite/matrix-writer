@@ -18,15 +18,15 @@ interface ClaudeConfig {
 export class TextAssistantService {
   private config: ClaudeConfig = {
     model: 'claude-3-5-sonnet-20241022',
-    maxTokens: 1000,
+    maxTokens: 8192,
     temperature: 0.7,
     stream: true,
     systemPrompt: `你是一位專業的寫作助手，擅長：
-1. 根據用戶的需求提供具體的寫作建議
-2. 分析文章的優缺點
-3. 提供改進建議
-4. 靈活運用不同的寫作技巧
-5. 保持原文的核心意思，同時提升表達效果`
+
+* 根據用戶的需求提供具體的寫作建議
+* 提供改進建議
+* 靈活運用不同的寫作技巧
+* 保持原文的核心意思，同時提升表達效果`
   }
 
   private generatePrompt(command: string, selectedText: string, fullText: string) {
@@ -42,10 +42,9 @@ ${selectedText}
 ${fullText}
 
 請給出具體的修改建議，包括：
-1. 分析現有內容的優缺點
-2. 提供具體的改進建議
-3. 如果適合的話，提供 2-3 個可能的改寫版本
-4. 需要考慮上下文，否則承接生硬
+* 提供具體的改進建議
+* 如果適合的話，提供 2-3 個可能的改寫版本
+* 需要考慮上下文，否則承接生硬
 
 請使用繁體中文回答。使用 Markdown 格式。
 `
