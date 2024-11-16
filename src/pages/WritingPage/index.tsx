@@ -104,15 +104,12 @@ export function WritingPage() {
     setText('')
     
     try {
-      let currentText = ''
       await writingService.generateArticle(
         writing.topic,
         writing.style,
         writing.content,
         (content) => {
-          currentText += content
-          setText(currentText)
-          console.log('Updating editor with text length:', currentText.length)
+          setText(content)
         }
       )
       
