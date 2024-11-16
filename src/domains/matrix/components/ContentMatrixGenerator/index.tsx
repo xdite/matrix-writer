@@ -14,16 +14,82 @@ const THEMES = {
 }
 
 const STYLES = [
-  'Actionable Guide Form (行動指引)',
-  'Opinion Form (意見文)',
-  'Curated List Form (策展文)',
-  'Story Form (故事文)',
-  'Credible Talking (人物訪談)',
-  'Motivational (勵志文)',
-  'Analytical (數據文)',
-  'Contrarian (對比文)',
-  'X vs Y (比較文)',
-  'Listicle (清單文)'
+  {
+    name: 'Behind the scene post (幕後文)',
+    example: '日更之旅完成！第一輪「365 天每日寫作計畫」圓滿落幕'
+  },
+  {
+    name: 'Challenge post (挑戰文)',
+    example: '挑戰 365 天連續日更'
+  },
+  {
+    name: 'Case Study post (案例分析文)',
+    example: '當工具型平台愈來愈多時，對於電商產業的商家來說是一件好事情嗎？'
+  },
+  {
+    name: 'Checklist post (檢查清單文)',
+    example: '這 50 家台北必吃餐廳，你都吃過了嗎？'
+  },
+  {
+    name: 'Chronicle Growth (編年史)',
+    example: '日本 40 年的產業電玩歷介紹'
+  },
+  {
+    name: 'Crowdsources post (大眾討論)',
+    example: '卡片盒筆記法到底要如何使用？'
+  },
+  {
+    name: 'FAQ post (問答文)',
+    example: 'Obsidian 新手常見 10 大問題'
+  },
+  {
+    name: 'Inspirational post (啟發文)',
+    example: '來自 Sean McCabe 演講的 3 點啟發'
+  },
+  {
+    name: 'Interview leaders (訪談文)',
+    example: '訪談 XXX 對於 OO 產業的看法'
+  },
+  {
+    name: 'List post (清單文)',
+    example: '10 種超好用的生產力工具'
+  },
+  {
+    name: 'News post (新聞評論文)',
+    example: '加密貨幣交易所負面新聞頻傳，為什麼還是吸引大家爭相投入市場？'
+  },
+  {
+    name: 'Research post (研究文)',
+    example: '網紅經濟的興起與生態圈懶人包'
+  },
+  {
+    name: 'Review products (評測產品)',
+    example: '評測 Mac Launcher – Raycast 功能'
+  },
+  {
+    name: 'Review services (評測服務)',
+    example: '評測 Engoo 線上 1 對 1 英文口說家教服務'
+  },
+  {
+    name: 'Series post (系列文)',
+    example: '最完整的 Obsidian 使用教學系列文'
+  },
+  {
+    name: 'Share experiences (分享經驗)',
+    example: '分享我面試 10 家軟體產品經理職缺的經驗'
+  },
+  {
+    name: 'Showcase post (展示成果文)',
+    example: '我如何在 Notion 中建立人脈資料庫？'
+  },
+  {
+    name: 'Story post (故事文)',
+    example: '我如何克服轉換工作的心理疙瘩？'
+  },
+  {
+    name: 'Teach post (教學文)',
+    example: '如何使用 Obsidian？'
+  }
 ]
 
 export function ContentMatrixGenerator() {
@@ -137,12 +203,25 @@ export function ContentMatrixGenerator() {
               <div className="grid grid-cols-2 gap-2">
                 {STYLES.map((style) => (
                   <Button
-                    key={style}
-                    variant={selectedStyle === style ? "default" : "outline"}
-                    onClick={() => setSelectedStyle(style)}
-                    className="w-full justify-start"
+                    key={style.name}
+                    variant={selectedStyle === style.name ? "default" : "outline"}
+                    onClick={() => setSelectedStyle(style.name)}
+                    className={`w-full text-left p-3 h-auto flex flex-col items-start ${
+                      selectedStyle === style.name 
+                        ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                        : 'hover:bg-accent hover:text-accent-foreground'
+                    }`}
                   >
-                    {style}
+                    <div className="flex flex-col items-start gap-0.5 w-full">
+                      <span className="font-medium text-sm">{style.name}</span>
+                      <span className={`text-xs ${
+                        selectedStyle === style.name 
+                          ? 'text-primary-foreground/80'
+                          : 'text-muted-foreground'
+                      }`}>
+                        例：{style.example}
+                      </span>
+                    </div>
                   </Button>
                 ))}
               </div>
@@ -162,7 +241,25 @@ export function ContentMatrixGenerator() {
 
         {generatedIdeas.length > 0 && (
           <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-4">寫作點子清單</h3>
+            <div className="mb-6 p-4 bg-muted rounded-lg">
+              <h3 className="text-lg font-semibold mb-2">寫作點子清單</h3>
+              <div className="space-y-1">
+                <p className="text-sm">
+                  <span className="font-medium">當前選擇主題： </span>
+                  <span className="text-muted-foreground">{customTopic}</span>
+
+                  <span className="font-medium"> 分類：</span>
+                  <span className="text-muted-foreground">{selectedTheme}</span>
+
+                  <span className="font-medium"> 寫作風格：</span>
+                  <span className="text-muted-foreground">
+                    {STYLES.find(s => s.name === selectedStyle)?.name}
+                  </span>
+                </p>
+          
+              </div>
+            </div>
+
             <div className="space-y-2">
               {generatedIdeas.map((idea, index) => (
                 <div key={index} className="p-3 bg-gray-100 rounded-lg">
