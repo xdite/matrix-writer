@@ -19,6 +19,7 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
   const [suggestion, setSuggestion] = useState('')
   const { toast } = useToast()
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
+  const [selectionRange, setSelectionRange] = useState<{from: number, to: number} | null>(null)
   
   const chatContentRef = useRef<HTMLDivElement>(null)
 
@@ -35,19 +36,20 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
   }
 
   const handleOpenAI = () => {
-    const text = editor.state.doc.textBetween(
-      editor.state.selection.from,
-      editor.state.selection.to
-    )
+    const from = editor.state.selection.from
+    const to = editor.state.selection.to
+    
+    const text = editor.state.doc.textBetween(from, to)
     setSelectedText(text)
+    setSelectionRange({ from, to })
     setCommand('')
     setSuggestion('')
     setIsOpen(true)
     
     // 取消選取
     editor.commands.setTextSelection({
-      from: editor.state.selection.from,
-      to: editor.state.selection.from
+      from: from,
+      to: from
     })
   }
 
@@ -115,6 +117,20 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
     }, 2000)
   }
 
+  const handleInsertCode = (text: string, index: number) => {
+    if (selectionRange) {
+      // 移動到原始選取的結束位置
+      editor.commands.setTextSelection(selectionRange.to)
+      // 插入換行和文字
+      editor.commands.insertContent('\n' + text)
+    }
+    
+    toast({
+      title: "已插入程式碼",
+      description: "程式碼已插入到選取位置之後",
+    })
+  }
+
   const renderWithCopyButton = (html: string) => {
     const parser = new DOMParser()
     const doc = parser.parseFromString(html, 'text/html')
@@ -124,34 +140,59 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
       const wrapper = document.createElement('div')
       wrapper.className = 'relative group'
       
-      const buttonHtml = `
-        <button class="absolute right-2 top-2 p-2 rounded-md bg-white hover:bg-gray-100 transition-all" data-index="${index}" data-copy-button>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            ${copiedIndex === index 
-              ? '<path d="M20 6 9 17l-5-5"/>' 
-              : '<path d="M8 17.929H6c-1.105 0-2-.912-2-2.036V5.036C4 3.912 4.895 3 6 3h8c1.105 0 2 .912 2 2.036v1.866m-6 .17h8c1.105 0 2 .91 2 2.035v10.857C20 21.088 19.105 22 18 22h-8c-1.105 0-2-.911-2-2.036V9.107c0-1.124.895-2.036 2-2.036z"/>'
-            }
-          </svg>
-        </button>
+      const buttonGroup = document.createElement('div')
+      buttonGroup.className = 'absolute right-2 top-2 flex gap-2'
+      
+      // 插入按鈕
+      const insertButton = document.createElement('button')
+      insertButton.className = 'p-2 rounded-md bg-white hover:bg-gray-100 transition-all'
+      insertButton.setAttribute('data-index', index.toString())
+      insertButton.setAttribute('data-action', 'insert')
+      insertButton.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
       `
+
+      // 複製按鈕
+      const copyButton = document.createElement('button')
+      copyButton.className = 'p-2 rounded-md bg-white hover:bg-gray-100 transition-all'
+      copyButton.setAttribute('data-index', index.toString())
+      copyButton.setAttribute('data-action', 'copy')
+      copyButton.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          ${copiedIndex === index 
+            ? '<path d="M20 6 9 17l-5-5"/>' 
+            : '<path d="M8 17.929H6c-1.105 0-2-.912-2-2.036V5.036C4 3.912 4.895 3 6 3h8c1.105 0 2 .912 2 2.036v1.866m-6 .17h8c1.105 0 2 .91 2 2.035v10.857C20 21.088 19.105 22 18 22h-8c-1.105 0-2-.911-2-2.036V9.107c0-1.124.895-2.036 2-2.036z"/>'
+          }
+        </svg>
+      `
+      
+      buttonGroup.appendChild(insertButton)
+      buttonGroup.appendChild(copyButton)
       
       pre.parentNode?.insertBefore(wrapper, pre)
       wrapper.appendChild(pre)
-      wrapper.insertAdjacentHTML('beforeend', buttonHtml)
+      wrapper.appendChild(buttonGroup)
     })
 
     const result = doc.body.innerHTML
 
     setTimeout(() => {
-      const buttons = document.querySelectorAll('[data-copy-button]')
+      const buttons = document.querySelectorAll('[data-action]')
       buttons.forEach(button => {
         button.addEventListener('click', (e) => {
           e.preventDefault()
           e.stopPropagation()
           const index = parseInt(button.getAttribute('data-index') || '0')
-          const pre = button.parentElement?.querySelector('pre')
+          const action = button.getAttribute('data-action')
+          const pre = button.closest('.relative')?.querySelector('pre')
           if (pre) {
-            handleCopy(pre.textContent || '', index)
+            if (action === 'copy') {
+              handleCopy(pre.textContent || '', index)
+            } else if (action === 'insert') {
+              handleInsertCode(pre.textContent || '', index)
+            }
           }
         })
       })
