@@ -6,7 +6,19 @@ interface ClaudeResponse {
   }>
 }
 
+interface ClaudeConfig {
+  model: string
+  maxTokens: number
+  temperature: number
+}
+
 export class IdeaService {
+  private config: ClaudeConfig = {
+    model: 'claude-3-5-sonnet-20241022',
+    maxTokens: 2000,
+    temperature: 0.7
+  }
+
   private generatePrompt(topic: string, theme: string, style: string, ideaCount: number) {
     return `
 你是一個內容創作專家。請針對以下主題和風格，生成 ${ideaCount} 個具體的內容創作點子：
@@ -39,7 +51,7 @@ export class IdeaService {
 
   async generateIdeas(topic: string, theme: string, style: string, ideaCount: number) {
     const prompt = this.generatePrompt(topic, theme, style, ideaCount)
-    const response = await generateIdeasWithClaude(prompt)
+    const response = await generateIdeasWithClaude(prompt, this.config)
     return this.processIdeas(response, ideaCount)
   }
 }

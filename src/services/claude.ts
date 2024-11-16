@@ -1,6 +1,12 @@
 import Anthropic from '@anthropic-ai/sdk'
 
-export async function generateIdeasWithClaude(prompt: string) {
+interface ClaudeConfig {
+  model: string
+  maxTokens: number
+  temperature: number
+}
+
+export async function generateIdeasWithClaude(prompt: string, config: ClaudeConfig) {
   const apiKey = localStorage.getItem('claudeApiKey')
   
   if (!apiKey) {
@@ -18,9 +24,9 @@ export async function generateIdeasWithClaude(prompt: string) {
   try {
     console.log('Sending request to Claude API...')
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 2000,
-      temperature: 0.7,
+      model: config.model,
+      max_tokens: config.maxTokens,
+      temperature: config.temperature,
       messages: [
         {
           role: 'user',
