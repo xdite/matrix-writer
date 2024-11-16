@@ -23,7 +23,7 @@ export function WritingPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedText, setGeneratedText] = useState('')
-  
+
   useEffect(() => {
     const loadWriting = async () => {
       if (!id) return
@@ -99,10 +99,10 @@ export function WritingPage() {
 
   const handleGenerateArticle = async () => {
     if (!writing) return
-    
+
     setIsGenerating(true)
     setText('')
-    
+
     try {
       await writingService.generateArticle(
         writing.topic,
@@ -112,12 +112,9 @@ export function WritingPage() {
           setText(content)
         }
       )
-      
+
       setIsDirty(true)
-      toast({
-        title: "生成完成",
-        description: "AI 已完成文章生成",
-      })
+
     } catch (error) {
       console.error('Error:', error)
       toast({
@@ -175,9 +172,9 @@ export function WritingPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <Editor 
+          <Editor
             key={text}
-            value={text} 
+            value={text}
             onChange={handleTextChange}
           />
         </CardContent>
@@ -187,7 +184,7 @@ export function WritingPage() {
               <span>上次儲存：{lastSavedAt.toLocaleTimeString()}</span>
             )}
           </div>
-          <Button 
+          <Button
             onClick={handleSave}
             disabled={!isDirty}
             variant={isDirty ? "default" : "outline"}
@@ -199,4 +196,4 @@ export function WritingPage() {
       </Card>
     </div>
   )
-} 
+}

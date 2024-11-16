@@ -6,6 +6,7 @@ interface ClaudeConfig {
   maxTokens: number
   temperature: number
   stream: boolean
+  systemPrompt: string
 }
 
 export class WritingService {
@@ -13,12 +14,21 @@ export class WritingService {
     model: 'claude-3-5-sonnet-20241022',
     maxTokens: 4000,
     temperature: 0.7,
-    stream: true
+    stream: true,
+    systemPrompt: `你是一位專業的內容寫作者，具有以下特點：
+1. 擅長使用 Markdown 格式編寫文章
+2. 善於結構化內容，確保文章層次分明
+3. 能夠根據不同的寫作風格調整表達方式
+4. 擅長使用具體案例和數據支持論點
+5. 注重文章的可讀性和實用性
+6. 能夠生成引人入勝的標題和小標題
+7. 善於使用轉場句來連接段落
+8. 會在適當位置加入總結和行動建議`
   }
 
   private generatePrompt(topic: string, style: string, content: string) {
     return `
-你是一位專業的內容寫作者。請根據以下資訊，生成一篇完整的文章：
+請根據以下資訊，生成一篇完整的文章：
 
 主題: ${topic}
 寫作風格: ${style}
@@ -50,7 +60,7 @@ export class WritingService {
       const response = await generateIdeasWithClaude(prompt, {
         config: this.config,
         onStream: (content) => {
-          console.log('Received chunk:', content)
+          //console.log('Received chunk:', content)
           fullContent += content
           
           // 每次都重新渲染完整的 markdown

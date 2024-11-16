@@ -5,6 +5,7 @@ interface ClaudeConfig {
   maxTokens: number
   temperature: number
   stream?: boolean
+  systemPrompt?: string
 }
 
 interface ClaudeOptions {
@@ -35,12 +36,11 @@ export async function generateIdeasWithClaude(prompt: string, options: ClaudeOpt
         model: options.config.model,
         max_tokens: options.config.maxTokens,
         temperature: options.config.temperature,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
+        system: options.config.systemPrompt,
+        messages: [{
+          role: 'user',
+          content: prompt
+        }],
         stream: true
       })
 
@@ -61,12 +61,11 @@ export async function generateIdeasWithClaude(prompt: string, options: ClaudeOpt
         model: options.config.model,
         max_tokens: options.config.maxTokens,
         temperature: options.config.temperature,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
+        system: options.config.systemPrompt,
+        messages: [{
+          role: 'user',
+          content: prompt
+        }],
         stream: false
       })
       
