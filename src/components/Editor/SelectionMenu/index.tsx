@@ -178,7 +178,7 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b">
-            <h2 className="text-lg font-medium">AI 寫作建議</h2>
+            <h2 className="text-base font-medium">AI 寫作建議</h2>
             <Button
               variant="ghost"
               size="icon"
@@ -196,7 +196,7 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
             {selectedText && (
               <div className="p-4 bg-muted rounded-md">
                 <div className="text-sm text-muted-foreground mb-2">選取的文字：</div>
-                <div className="text-base">{selectedText}</div>
+                <div className="text-sm">{selectedText}</div>
               </div>
             )}
 
@@ -219,16 +219,17 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
 
             {(isLoading || suggestion) && (
               <div className="mt-6 space-y-4">
-                <div className="p-4 bg-muted rounded-md prose prose-sm max-w-none">
+                <div className="p-6 bg-muted rounded-md">
                   {isLoading && !suggestion && (
-                    <div className="animate-pulse">AI 正在思考中...</div>
+                    <div className="animate-pulse text-sm">AI 正在思考中...</div>
                   )}
                   {suggestion && (
                     <>
                       <div 
                         dangerouslySetInnerHTML={{ __html: suggestion }}
+                        className="prose max-w-none prose-pre:whitespace-pre-wrap prose-pre:break-words prose-pre:text-base prose-pre:leading-relaxed prose-headings:text-base prose-headings:font-medium"
                       />
-                      <div className="mt-4 pt-4 border-t">
+                      <div className="mt-6 pt-4 border-t">
                         <Button
                           onClick={handleApplySuggestion}
                           className="w-full"
