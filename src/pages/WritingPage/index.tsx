@@ -112,6 +112,20 @@ export function WritingPage() {
         (content) => {
           console.log('Setting text:', content)
           setText(content)
+          
+          // 使用 requestAnimationFrame 確保在 DOM 更新後執行滾動
+          requestAnimationFrame(() => {
+            if (editorRef.current) {
+              // 滾動到編輯器底部
+              const editorElement = editorRef.current.querySelector('.ProseMirror')
+              if (editorElement) {
+                editorElement.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'end'
+                })
+              }
+            }
+          })
         }
       )
 
