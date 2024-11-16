@@ -181,7 +181,6 @@ export function WritingPage() {
         <CardContent className="pt-6">
           <div ref={editorRef}>
             <Editor
-              key={text}
               value={text}
               onChange={handleTextChange}
             />

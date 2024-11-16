@@ -3,6 +3,8 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { common, createLowlight } from 'lowlight'
+import { Extension } from '@tiptap/core'
+import { Plugin } from 'prosemirror-state'
 import { 
   Bold, 
   Italic, 
@@ -18,8 +20,57 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { SelectionMenu } from './SelectionMenu'
 
 const lowlight = createLowlight(common)
+
+const PreventContextMenu = Extension.create({
+  name: 'preventContextMenu',
+
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        props: {
+          handleDOMEvents: {
+            contextmenu: (view, event) => {
+              const { state } = view
+              const { empty } = state.selection
+              
+              if (!empty) {
+                event.preventDefault()
+              }
+              return true
+            }
+          }
+        }
+      })
+    ]
+  }
+})
+
+const CustomKeymap = Extension.create({
+  name: 'customKeymap',
+
+  addKeyboardShortcuts() {
+    return {
+      // Undo
+      'Mod-z': () => {
+        this.editor.commands.undo()
+        return true
+      },
+      // Redo 
+      'Mod-Shift-z': () => {
+        this.editor.commands.redo()
+        return true
+      },
+      // Windows 上的 Ctrl+Y 也可以 redo
+      'Mod-y': () => {
+        this.editor.commands.redo()
+        return true
+      },
+    }
+  },
+})
 
 interface EditorProps {
   value: string
@@ -38,6 +89,8 @@ export function Editor({ value, onChange }: EditorProps) {
       CodeBlockLowlight.configure({
         lowlight,
       }),
+      PreventContextMenu,
+      CustomKeymap,
     ],
     content: value,
     editorProps: {
@@ -177,6 +230,9 @@ export function Editor({ value, onChange }: EditorProps) {
           <Redo className="h-4 w-4" />
         </ToolbarButton>
       </div>
+
+      <SelectionMenu editor={editor} />
+
       <EditorContent editor={editor} />
     </div>
   )
