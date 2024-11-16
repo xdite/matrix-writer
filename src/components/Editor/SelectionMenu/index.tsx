@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from 'react'
 import { textAssistantService } from '@/domains/matrix/services/textAssistantService'
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/lib/utils'
+import { marked } from 'marked'
 
 interface SelectionMenuProps {
   editor: Editor
@@ -121,8 +122,15 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
     if (selectionRange) {
       // 移動到原始選取的結束位置
       editor.commands.setTextSelection(selectionRange.to)
-      // 插入換行和文字
-      editor.commands.insertContent('\n' + text)
+      
+      // 將文字轉換為 HTML
+      const htmlContent = marked(text, {
+        breaks: true,
+        gfm: true
+      })
+      
+      // 在插入前後都加入換行，並插入轉換後的 HTML
+      editor.commands.insertContent('\n\n' + htmlContent + '\n\n')
     }
     
     toast({
