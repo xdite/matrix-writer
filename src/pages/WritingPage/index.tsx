@@ -8,6 +8,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Editor } from '@/components/Editor'
 import { useToast } from '@/components/ui/use-toast'
 import { Writing } from '@/domains/matrix/types'
+import { StyleGuideDrawer } from '@/components/StyleGuideDrawer'
 
 export function WritingPage() {
   const { id } = useParams()
@@ -110,8 +111,11 @@ export function WritingPage() {
       <Card className="mb-4">
         <CardContent className="pt-6">
           <div className="prose prose-sm">
-            <div className="font-medium text-muted-foreground mb-4">
-              寫作主題：
+            <div className="flex items-center justify-between mb-4">
+              <div className="font-medium text-muted-foreground">
+                寫作主題：
+              </div>
+              <StyleGuideDrawer style={writing.style} />
             </div>
             <p>{writing.content}</p>
           </div>
