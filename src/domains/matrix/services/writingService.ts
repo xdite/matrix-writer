@@ -65,16 +65,19 @@ export class WritingService {
             breaks: true,
             gfm: true,
           })
-          console.log('Converted HTML:', htmlContent)
+          console.log('Streaming HTML:', htmlContent)
           onProgress?.(htmlContent)
         }
       })
 
-      const finalHtml = marked(fullContent, {
+      const processedContent = fullContent.replace(/^.+?[\r\n]/, '')
+      const finalHtml = marked(processedContent, {
         breaks: true,
         gfm: true,
       })
       console.log('Final HTML content:', finalHtml)
+      
+      onProgress?.(finalHtml)
       return finalHtml
     } catch (error) {
       console.error('Error generating article:', error)
