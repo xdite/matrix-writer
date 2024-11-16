@@ -132,6 +132,12 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
   }
 
   const renderWithCopyButton = (html: string) => {
+    // 先清除所有現有的事件監聽器
+    const existingButtons = document.querySelectorAll('[data-action]')
+    existingButtons.forEach(button => {
+      button.replaceWith(button.cloneNode(true))
+    })
+
     const parser = new DOMParser()
     const doc = parser.parseFromString(html, 'text/html')
     const preElements = doc.querySelectorAll('pre')
@@ -178,15 +184,19 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
 
     const result = doc.body.innerHTML
 
-    setTimeout(() => {
+    // 使用 requestAnimationFrame 而不是 setTimeout
+    requestAnimationFrame(() => {
       const buttons = document.querySelectorAll('[data-action]')
       buttons.forEach(button => {
-        button.addEventListener('click', (e) => {
+        const newButton = button.cloneNode(true)
+        button.parentNode?.replaceChild(newButton, button)
+        
+        newButton.addEventListener('click', (e) => {
           e.preventDefault()
           e.stopPropagation()
-          const index = parseInt(button.getAttribute('data-index') || '0')
-          const action = button.getAttribute('data-action')
-          const pre = button.closest('.relative')?.querySelector('pre')
+          const index = parseInt(newButton.getAttribute('data-index') || '0')
+          const action = newButton.getAttribute('data-action')
+          const pre = newButton.closest('.relative')?.querySelector('pre')
           if (pre) {
             if (action === 'copy') {
               handleCopy(pre.textContent || '', index)
@@ -196,7 +206,7 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
           }
         })
       })
-    }, 0)
+    })
 
     return result
   }
