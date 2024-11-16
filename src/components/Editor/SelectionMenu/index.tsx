@@ -10,6 +10,15 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
     return null
   }
 
+  const handleFormat = (callback: () => boolean) => {
+    callback()
+    // 執行命令後清除選取
+    editor.commands.setTextSelection({
+      from: editor.state.selection.to,
+      to: editor.state.selection.to
+    })
+  }
+
   return (
     <BubbleMenu 
       editor={editor} 
@@ -17,34 +26,13 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
         duration: 100,
         placement: 'bottom',
         offset: [0, 10],
-        appendTo: () => document.body,
-        popperOptions: {
-          strategy: 'fixed',
-          modifiers: [
-            {
-              name: 'flip',
-              enabled: false
-            },
-            {
-              name: 'preventOverflow',
-              options: {
-                altAxis: true,
-                tether: false,
-                rootBoundary: 'document',
-                padding: 5
-              },
-            }
-          ],
-        }
       }}
       className="bg-white rounded-lg shadow-lg border p-1.5 min-w-[180px]"
-      shouldShow={({ editor }) => {
-        return editor.view.hasFocus()
-      }}
     >
       <button
+        type="button"
         className="flex items-center gap-2 w-full px-2 py-1.5 text-sm hover:bg-slate-100 rounded-sm"
-        onClick={() => editor.chain().focus().toggleBold().run()}
+        onClick={() => handleFormat(() => editor.chain().focus().toggleBold().run())}
       >
         <Bold className="w-4 h-4" />
         <span>粗體</span>
@@ -52,8 +40,9 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
       </button>
 
       <button
+        type="button"
         className="flex items-center gap-2 w-full px-2 py-1.5 text-sm hover:bg-slate-100 rounded-sm"
-        onClick={() => editor.chain().focus().toggleItalic().run()}
+        onClick={() => handleFormat(() => editor.chain().focus().toggleItalic().run())}
       >
         <Italic className="w-4 h-4" />
         <span>斜體</span>
@@ -61,8 +50,9 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
       </button>
 
       <button
+        type="button"
         className="flex items-center gap-2 w-full px-2 py-1.5 text-sm hover:bg-slate-100 rounded-sm"
-        onClick={() => editor.chain().focus().toggleCode().run()}
+        onClick={() => handleFormat(() => editor.chain().focus().toggleCode().run())}
       >
         <Code className="w-4 h-4" />
         <span>程式碼</span>
@@ -72,8 +62,9 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
       <div className="h-px bg-border my-1" />
 
       <button
+        type="button"
         className="flex items-center gap-2 w-full px-2 py-1.5 text-sm hover:bg-slate-100 rounded-sm"
-        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        onClick={() => handleFormat(() => editor.chain().focus().toggleBlockquote().run())}
       >
         <Quote className="w-4 h-4" />
         <span>引用</span>
