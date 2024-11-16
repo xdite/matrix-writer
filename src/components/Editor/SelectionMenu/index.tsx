@@ -1,5 +1,5 @@
 import { Editor, BubbleMenu } from '@tiptap/react'
-import { Bold, Italic, Code, Quote, Wand2, X } from 'lucide-react'
+import { Bold, Italic, Code, Quote, Wand2, X, Copy, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useState, useRef, useEffect } from 'react'
@@ -18,6 +18,7 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [suggestion, setSuggestion] = useState('')
   const { toast } = useToast()
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   
   const chatContentRef = useRef<HTMLDivElement>(null)
 
@@ -102,6 +103,59 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
     setIsOpen(false)
     setCommand('')
     setSuggestion('')
+  }
+
+  const handleCopy = (text: string, index: number) => {
+    navigator.clipboard.writeText(text)
+    setCopiedIndex(index)
+    setTimeout(() => {
+      setCopiedIndex(null)
+    }, 2000)
+  }
+
+  const renderWithCopyButton = (html: string) => {
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html')
+    const preElements = doc.querySelectorAll('pre')
+    
+    preElements.forEach((pre, index) => {
+      const wrapper = document.createElement('div')
+      wrapper.className = 'relative group'
+      
+      const buttonHtml = `
+        <button class="absolute right-2 top-2 p-2 rounded-md bg-white hover:bg-gray-100 transition-all" data-index="${index}" data-copy-button>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            ${copiedIndex === index 
+              ? '<path d="M20 6 9 17l-5-5"/>' 
+              : '<path d="M8 17.929H6c-1.105 0-2-.912-2-2.036V5.036C4 3.912 4.895 3 6 3h8c1.105 0 2 .912 2 2.036v1.866m-6 .17h8c1.105 0 2 .91 2 2.035v10.857C20 21.088 19.105 22 18 22h-8c-1.105 0-2-.911-2-2.036V9.107c0-1.124.895-2.036 2-2.036z"/>'
+            }
+          </svg>
+        </button>
+      `
+      
+      pre.parentNode?.insertBefore(wrapper, pre)
+      wrapper.appendChild(pre)
+      wrapper.insertAdjacentHTML('beforeend', buttonHtml)
+    })
+
+    const result = doc.body.innerHTML
+
+    setTimeout(() => {
+      const buttons = document.querySelectorAll('[data-copy-button]')
+      buttons.forEach(button => {
+        button.addEventListener('click', (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          const index = parseInt(button.getAttribute('data-index') || '0')
+          const pre = button.parentElement?.querySelector('pre')
+          if (pre) {
+            handleCopy(pre.textContent || '', index)
+          }
+        })
+      })
+    }, 0)
+
+    return result
   }
 
   return (
@@ -226,8 +280,10 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
                   {suggestion && (
                     <>
                       <div 
-                        dangerouslySetInnerHTML={{ __html: suggestion }}
-                        className="prose max-w-none prose-pre:whitespace-pre-wrap prose-pre:break-words prose-pre:text-base prose-pre:leading-relaxed prose-headings:text-base prose-headings:font-medium"
+                        dangerouslySetInnerHTML={{ 
+                          __html: renderWithCopyButton(suggestion)
+                        }}
+                        className="prose max-w-none prose-pre:whitespace-pre-wrap prose-pre:break-words prose-pre:text-base prose-pre:leading-relaxed prose-headings:text-base prose-headings:font-medium prose-pre:relative prose-pre:p-4"
                       />
                       <div className="mt-6 pt-4 border-t">
                         <Button
