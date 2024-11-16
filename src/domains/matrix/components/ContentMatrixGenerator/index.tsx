@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { useMatrix } from '../../contexts/MatrixContext'
 import { generateIdeasWithClaude } from '@/services/claude'
 import { useToast } from '@/components/ui/use-toast'
+import { Badge } from '@/components/ui/badge'
 
 const THEMES = {
   general: ['生活習慣', '生產力', '個人成長', '理財知識', '時間管理'],
@@ -256,14 +257,21 @@ export function ContentMatrixGenerator() {
                     {STYLES.find(s => s.name === selectedStyle)?.name}
                   </span>
                 </p>
-          
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               {generatedIdeas.map((idea, index) => (
-                <div key={index} className="p-3 bg-gray-100 rounded-lg">
-                  {index + 1}. {idea}
+                <div key={index} className="p-4 bg-gray-100 rounded-lg">
+           
+                  <div className="text-sm">
+                    {index + 1}. {idea}
+
+                    <Badge variant="secondary ">{customTopic}</Badge>
+                    <Badge variant="outline ">
+                      {STYLES.find(s => s.name === selectedStyle)?.name.split(' ')[0]}
+                    </Badge>
+                  </div>
                 </div>
               ))}
             </div>
