@@ -145,14 +145,29 @@ export function WritingPage() {
       </div>
 
       <Card className="mb-4">
-        <CardContent className="pt-6">
-          <div className="prose prose-sm">
-            <div className="flex items-center justify-between mb-4">
-              <div className="font-medium text-muted-foreground">
-                寫作主題：
-              </div>
+        <CardContent className="pt-2">
+          <div className="flex items-center justify-between mb-4">
+            <div className="font-medium text-muted-foreground">
+              寫作主題：
+            </div>
+            <div className="flex items-center gap-4 mt-4">
+              <Button
+                onClick={handleGenerateArticle}
+                disabled={isGenerating}
+                variant="default"
+              >
+                {isGenerating ? (
+                  <>
+                    <span className="animate-pulse">AI 生成中...</span>
+                  </>
+                ) : (
+                  "AI 寫作"
+                )}
+              </Button>
               <StyleGuideDrawer style={writing.style} />
             </div>
+          </div>
+          <div className="prose prose-sm max-w-none">
             <p>{writing.content}</p>
           </div>
         </CardContent>
@@ -160,28 +175,11 @@ export function WritingPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col gap-4">
-            <div className="flex justify-end">
-              <Button
-                onClick={handleGenerateArticle}
-                disabled={isGenerating}
-                className="mb-4"
-              >
-                {isGenerating ? (
-                  <>
-                    <span className="animate-pulse">生成中...</span>
-                  </>
-                ) : (
-                  "AI 寫作"
-                )}
-              </Button>
-            </div>
-            <Editor 
-              key={text}
-              value={text} 
-              onChange={handleTextChange}
-            />
-          </div>
+          <Editor 
+            key={text}
+            value={text} 
+            onChange={handleTextChange}
+          />
         </CardContent>
         <CardFooter className="flex items-center justify-between py-4 px-6 border-t bg-muted/50">
           <div className="text-sm text-muted-foreground">
