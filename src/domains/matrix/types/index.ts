@@ -23,4 +23,12 @@ export interface MatrixCell {
   topicId: string
   styleId: string
   ideas: Idea[]
+}
+
+export interface SelectedIdea {
+  id: string
+  content: string
+  topic: string
+  style: string
+  addedAt: Date
 } 
