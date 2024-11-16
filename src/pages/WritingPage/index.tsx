@@ -103,23 +103,15 @@ export function WritingPage() {
 
     setIsGenerating(true)
     setText('')
-
+    
     try {
       await writingService.generateArticle(
         writing.topic,
         writing.style,
         writing.content,
         (content) => {
-          const processedContent = content.replace(/^.+?[\r\n]/, '')
-          setText(processedContent)
-          if (editorRef.current) {
-            setTimeout(() => {
-              editorRef.current?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'end'
-              })
-            }, 100)
-          }
+          console.log('Setting text:', content)
+          setText(content)
         }
       )
 
@@ -181,8 +173,10 @@ export function WritingPage() {
         <CardContent className="pt-6">
           <div ref={editorRef}>
             <Editor
+              key={text}
               value={text}
               onChange={handleTextChange}
+              defaultValue=""
             />
           </div>
         </CardContent>

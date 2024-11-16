@@ -15,12 +15,12 @@ interface ClaudeOptions {
 
 export async function generateIdeasWithClaude(prompt: string, options: ClaudeOptions) {
   const apiKey = localStorage.getItem('claudeApiKey')
-  
+
   if (!apiKey) {
     console.log('API Key missing in localStorage')
     throw new Error('Claude API key not found')
   }
-  
+
   console.log('Using API Key:', apiKey.substring(0, 8) + '...')
 
   const anthropic = new Anthropic({
@@ -30,7 +30,7 @@ export async function generateIdeasWithClaude(prompt: string, options: ClaudeOpt
 
   try {
     console.log('Sending request to Claude API...')
-    
+
     if (options.config.stream) {
       const response = await anthropic.messages.create({
         model: options.config.model,
@@ -49,8 +49,11 @@ export async function generateIdeasWithClaude(prompt: string, options: ClaudeOpt
         if (chunk.type === 'content_block_delta') {
           const content = chunk.delta?.text || ''
           fullContent += content
+          console.log(content)
           options.onStream?.(content)
+
         }
+
       }
 
       return {
@@ -68,7 +71,7 @@ export async function generateIdeasWithClaude(prompt: string, options: ClaudeOpt
         }],
         stream: false
       })
-      
+
       console.log('Received response:', response)
       return {
         content: [{ text: response.content[0].text }]
@@ -84,4 +87,4 @@ export async function generateIdeasWithClaude(prompt: string, options: ClaudeOpt
     })
     throw error
   }
-} 
+}
