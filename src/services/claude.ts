@@ -1,8 +1,20 @@
 import Anthropic from '@anthropic-ai/sdk'
 
-export async function generateIdeasWithClaude(topic: string, theme: string, style: string) {
+interface ClaudeConfig {
+  model: string
+  maxTokens: number
+  temperature: number
+  stream?: boolean
+  systemPrompt?: string
+}
+
+interface ClaudeOptions {
+  config: ClaudeConfig
+  onStream?: (content: string) => void
+}
+
+export async function generateIdeasWithClaude(prompt: string, options: ClaudeOptions) {
   const apiKey = localStorage.getItem('claudeApiKey')
-  const ideaCount = Number(localStorage.getItem('ideaCount') || '10')
   
   if (!apiKey) {
     console.log('API Key missing in localStorage')
@@ -10,60 +22,65 @@ export async function generateIdeasWithClaude(topic: string, theme: string, styl
   }
   
   console.log('Using API Key:', apiKey.substring(0, 8) + '...')
-  console.log('Generating ideas for:', { topic, theme, style, ideaCount })
 
   const anthropic = new Anthropic({
     apiKey: apiKey,
     dangerouslyAllowBrowser: true
   })
 
-  const prompt = `
-你是一個內容創作專家。請針對以下主題和風格，生成 ${ideaCount} 個具體的內容創作點子：
-
-主題: ${topic}
-分類: ${theme}
-寫作風格: ${style}
-
-每個點子應該要：
-1. 具體且可執行
-2. 符合該寫作風格的特點
-3. 能吸引目標讀者
-4. 有獨特的切入角度
-
-請直接列出點子，每個點子一行，不要加序號。
-`
-
   try {
     console.log('Sending request to Claude API...')
-    const response = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 2000,
-      temperature: 0.7,
-      messages: [
-        {
+    
+    if (options.config.stream) {
+      const response = await anthropic.messages.create({
+        model: options.config.model,
+        max_tokens: options.config.maxTokens,
+        temperature: options.config.temperature,
+        system: options.config.systemPrompt,
+        messages: [{
           role: 'user',
           content: prompt
-        }
-      ]
-    })
-    
-    console.log('Received response:', response)
+        }],
+        stream: true
+      })
 
-    // 解析回應並轉換成字串陣列，同時清理格式
-    const ideas = response.content[0].text
-      .split('\n')
-      .filter(line => line.trim().length > 0)
-      .map(line => line.replace(/^\d+\.\s*/, '')) // 移除開頭的數字和點
-      .slice(1, ideaCount + 1) // 第一行不是主題，而是開場文
-　　　　　
-    console.log('Processed ideas:', ideas)
-    return ideas
-  } catch (error) {
+      let fullContent = ''
+      for await (const chunk of response) {
+        if (chunk.type === 'content_block_delta') {
+          const content = chunk.delta?.text || ''
+          fullContent += content
+          options.onStream?.(content)
+        }
+      }
+
+      return {
+        content: [{ text: fullContent }]
+      }
+    } else {
+      const response = await anthropic.messages.create({
+        model: options.config.model,
+        max_tokens: options.config.maxTokens,
+        temperature: options.config.temperature,
+        system: options.config.systemPrompt,
+        messages: [{
+          role: 'user',
+          content: prompt
+        }],
+        stream: false
+      })
+      
+      console.log('Received response:', response)
+      return {
+        content: [{ text: response.content[0].text }]
+      }
+    }
+
+  } catch (error: unknown) {
     console.error('Detailed error:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-      response: error.response
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      response: error instanceof Error ? (error as any).response : undefined
     })
     throw error
   }

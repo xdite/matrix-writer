@@ -31,4 +31,14 @@ export interface SelectedIdea {
   topic: string
   style: string
   addedAt: Date
+}
+
+export interface Writing {
+  id: string
+  content: string
+  topic: string
+  style: string
+  text: string
+  createdAt: Date
+  updatedAt: Date
 } 
