@@ -1,24 +1,25 @@
 import { Editor, BubbleMenu } from '@tiptap/react'
-import { Bold, Italic, Code, Quote, Wand2 } from 'lucide-react'
-import * as Dialog from '@radix-ui/react-dialog'
+import { Bold, Italic, Code, Quote, Wand2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { textAssistantService } from '@/domains/matrix/services/textAssistantService'
 import { useToast } from '@/components/ui/use-toast'
-import { marked } from 'marked'
+import { cn } from '@/lib/utils'
 
 interface SelectionMenuProps {
   editor: Editor
 }
 
 export function SelectionMenu({ editor }: SelectionMenuProps) {
-  const [open, setOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
   const [command, setCommand] = useState('')
   const [selectedText, setSelectedText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [suggestion, setSuggestion] = useState('')
   const { toast } = useToast()
+  
+  const chatContentRef = useRef<HTMLDivElement>(null)
 
   if (!editor) {
     return null
@@ -32,19 +33,32 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
     })
   }
 
-  const handleOpenAIDialog = () => {
+  const handleOpenAI = () => {
     const text = editor.state.doc.textBetween(
       editor.state.selection.from,
       editor.state.selection.to
     )
     setSelectedText(text)
+    setIsOpen(true)
     
+    // 取消選取
     editor.commands.setTextSelection({
       from: editor.state.selection.from,
       to: editor.state.selection.from
     })
-    setOpen(true)
   }
+
+  const scrollToBottom = () => {
+    if (chatContentRef.current) {
+      chatContentRef.current.scrollTop = chatContentRef.current.scrollHeight
+    }
+  }
+
+  useEffect(() => {
+    if (suggestion) {
+      setTimeout(scrollToBottom, 100)
+    }
+  }, [suggestion])
 
   const handleAIAssist = async () => {
     try {
@@ -60,6 +74,7 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
         },
         (content) => {
           setSuggestion(content)
+          setTimeout(scrollToBottom, 100)
         }
       )
     } catch (error) {
@@ -80,7 +95,11 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
 
     editor.commands.insertContent(plainText)
     
-    setOpen(false)
+    handleClose()
+  }
+
+  const handleClose = () => {
+    setIsOpen(false)
     setCommand('')
     setSuggestion('')
   }
@@ -142,84 +161,89 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
         <button
           type="button"
           className="flex items-center gap-2 w-full px-2 py-1.5 text-sm hover:bg-slate-100 rounded-sm"
-          onClick={handleOpenAIDialog}
+          onClick={handleOpenAI}
         >
           <Wand2 className="w-4 h-4" />
           <span>AI 建議</span>
         </button>
       </BubbleMenu>
 
-      <Dialog.Root open={open} onOpenChange={setOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-          <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[90vw] max-w-[800px] max-h-[90vh] bg-white rounded-lg p-6 overflow-hidden flex flex-col">
-            <Dialog.Title className="text-xl font-medium mb-4">
-              AI 寫作建議
-            </Dialog.Title>
-            
-            <div className="space-y-4 flex-1 overflow-hidden">
-              {selectedText && (
-                <div className="p-4 bg-muted rounded-md">
-                  <div className="text-sm text-muted-foreground mb-2">選取的文字：</div>
-                  <div className="text-base">{selectedText}</div>
-                </div>
-              )}
-              
+      {/* Sidebar Chat */}
+      <div
+        className={cn(
+          "fixed right-0 top-0 h-screen w-[500px] bg-white shadow-lg transform transition-transform duration-200 ease-in-out border-l",
+          isOpen ? "translate-x-0" : "translate-x-full"
+        )}
+      >
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b">
+            <h2 className="text-lg font-medium">AI 寫作建議</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleClose}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Content */}
+          <div 
+            ref={chatContentRef}
+            className="flex-1 overflow-auto p-6 space-y-4 scroll-smooth"
+          >
+            {selectedText && (
+              <div className="p-4 bg-muted rounded-md">
+                <div className="text-sm text-muted-foreground mb-2">選取的文字：</div>
+                <div className="text-base">{selectedText}</div>
+              </div>
+            )}
+
+            <div className="space-y-2">
               <Textarea
                 placeholder="輸入你想要的建議，例如：幫我改寫得更生動..."
                 value={command}
                 onChange={(e) => setCommand(e.target.value)}
                 rows={3}
-                className="text-base"
+                className="text-base resize-none"
               />
+              <Button
+                className="w-full"
+                onClick={handleAIAssist}
+                disabled={isLoading || !command.trim()}
+              >
+                {isLoading ? "處理中..." : "取得建議"}
+              </Button>
+            </div>
 
-              {(isLoading || suggestion) && (
-                <div className="flex-1 overflow-auto">
-                  <div className="p-6 bg-muted rounded-md prose prose-lg max-w-none">
-                    {isLoading && !suggestion && (
-                      <div className="animate-pulse">AI 正在思考中...</div>
-                    )}
-                    {suggestion && (
+            {(isLoading || suggestion) && (
+              <div className="mt-6 space-y-4">
+                <div className="p-4 bg-muted rounded-md prose prose-sm max-w-none">
+                  {isLoading && !suggestion && (
+                    <div className="animate-pulse">AI 正在思考中...</div>
+                  )}
+                  {suggestion && (
+                    <>
                       <div 
                         dangerouslySetInnerHTML={{ __html: suggestion }}
-                        className="overflow-auto max-h-[50vh]"
                       />
-                    )}
-                  </div>
+                      <div className="mt-4 pt-4 border-t">
+                        <Button
+                          onClick={handleApplySuggestion}
+                          className="w-full"
+                        >
+                          套用建議
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </div>
-              )}
-              
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setOpen(false)
-                    setSuggestion('')
-                    setCommand('')
-                  }}
-                >
-                  取消
-                </Button>
-                {!suggestion && (
-                  <Button
-                    onClick={handleAIAssist}
-                    disabled={isLoading || !command.trim()}
-                  >
-                    {isLoading ? "處理中..." : "取得建議"}
-                  </Button>
-                )}
-                {suggestion && (
-                  <Button
-                    onClick={handleApplySuggestion}
-                  >
-                    套用建議
-                  </Button>
-                )}
               </div>
-            </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+            )}
+          </div>
+        </div>
+      </div>
     </>
   )
 } 
