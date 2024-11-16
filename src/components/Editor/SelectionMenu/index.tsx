@@ -13,8 +13,34 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
   return (
     <BubbleMenu 
       editor={editor} 
-      tippyOptions={{ duration: 100 }}
+      tippyOptions={{ 
+        duration: 100,
+        placement: 'bottom',
+        offset: [0, 10],
+        appendTo: () => document.body,
+        popperOptions: {
+          strategy: 'fixed',
+          modifiers: [
+            {
+              name: 'flip',
+              enabled: false
+            },
+            {
+              name: 'preventOverflow',
+              options: {
+                altAxis: true,
+                tether: false,
+                rootBoundary: 'document',
+                padding: 5
+              },
+            }
+          ],
+        }
+      }}
       className="bg-white rounded-lg shadow-lg border p-1.5 min-w-[180px]"
+      shouldShow={({ editor }) => {
+        return editor.view.hasFocus()
+      }}
     >
       <button
         className="flex items-center gap-2 w-full px-2 py-1.5 text-sm hover:bg-slate-100 rounded-sm"
