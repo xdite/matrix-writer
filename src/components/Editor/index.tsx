@@ -70,6 +70,13 @@ const CustomKeymap = Extension.create({
         this.editor.commands.redo()
         return true
       },
+      // 新增儲存快捷鍵
+      'Mod-s': () => {
+        // 觸發自定義事件
+        const event = new CustomEvent('editor-save')
+        window.dispatchEvent(event)
+        return true
+      },
     }
   },
 })
@@ -131,7 +138,32 @@ export function Editor({ value, onChange, onSave }: EditorProps) {
     }
   }, [value, editor])
 
-  const handleSave = () => {
+  // 處理儲存事件
+  useEffect(() => {
+    const handleSave = (e: Event) => {
+      e.preventDefault()
+      if (isDirty) {
+        handleSaveClick()
+      }
+    }
+
+    // 監聽自定義事件
+    window.addEventListener('editor-save', handleSave)
+    // 同時攔截瀏覽器的儲存事件
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault()
+      }
+    })
+
+    return () => {
+      window.removeEventListener('editor-save', handleSave)
+      window.removeEventListener('keydown', handleSave)
+    }
+  }, [isDirty])
+
+  // 重命名 handleSave 為 handleSaveClick 以避免混淆
+  const handleSaveClick = () => {
     if (editor && isDirty) {
       onChange(editor.getHTML())
       onSave?.()
@@ -269,9 +301,10 @@ export function Editor({ value, onChange, onSave }: EditorProps) {
         <Button
           variant="outline"
           size="sm"
-          onClick={handleSave}
+          onClick={handleSaveClick}
           disabled={!isDirty}
           className="flex items-center gap-2"
+          title="儲存 (Ctrl+S)"
         >
           <Save className="h-4 w-4" />
           {isDirty ? "儲存" : "已儲存"}
