@@ -21,7 +21,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { SelectionMenu } from './SelectionMenu'
-import { useEffect } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { debounce } from 'lodash'
 
 const lowlight = createLowlight(common)
 
@@ -69,6 +70,13 @@ const CustomKeymap = Extension.create({
         this.editor.commands.redo()
         return true
       },
+      // 新增儲存快捷鍵
+      'Mod-s': () => {
+        // 觸發自定義事件
+        const event = new CustomEvent('editor-save')
+        window.dispatchEvent(event)
+        return true
+      },
     }
   },
 })
@@ -76,13 +84,21 @@ const CustomKeymap = Extension.create({
 interface EditorProps {
   value: string
   onChange: (value: string) => void
+  onSave?: () => void
 }
 
-export function Editor({ value, onChange }: EditorProps) {
+export function Editor({ value, onChange, onSave }: EditorProps) {
+  const previousValueRef = useRef(value)
+  const [isDirty, setIsDirty] = useState(false)
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         codeBlock: false,
+        history: {
+          depth: 100,
+          newGroupDelay: 500
+        }
       }),
       Placeholder.configure({
         placeholder: '開始寫作...',
@@ -100,16 +116,60 @@ export function Editor({ value, onChange }: EditorProps) {
       },
     },
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML())
+      setIsDirty(true)
     },
   })
 
+  // 優化 content 更新邏輯
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
-      console.log('Updating editor content:', value)
-      editor.commands.setContent(value, false)
+    if (editor && value !== previousValueRef.current) {
+      const { from, to } = editor.state.selection
+      const currentContent = editor.getHTML()
+      
+      if (value !== currentContent) {
+        editor.chain()
+          .setContent(value, false)
+          .setTextSelection({ from, to })
+          .run()
+      }
+      
+      previousValueRef.current = value
+      setIsDirty(false)
     }
   }, [value, editor])
+
+  // 處理儲存事件
+  useEffect(() => {
+    const handleSave = (e: Event) => {
+      e.preventDefault()
+      if (isDirty) {
+        handleSaveClick()
+      }
+    }
+
+    // 監聽自定義事件
+    window.addEventListener('editor-save', handleSave)
+    // 同時攔截瀏覽器的儲存事件
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault()
+      }
+    })
+
+    return () => {
+      window.removeEventListener('editor-save', handleSave)
+      window.removeEventListener('keydown', handleSave)
+    }
+  }, [isDirty])
+
+  // 重命名 handleSave 為 handleSaveClick 以避免混淆
+  const handleSaveClick = () => {
+    if (editor && isDirty) {
+      onChange(editor.getHTML())
+      onSave?.()
+      setIsDirty(false)
+    }
+  }
 
   if (!editor) {
     return null
@@ -237,9 +297,21 @@ export function Editor({ value, onChange }: EditorProps) {
         >
           <Redo className="h-4 w-4" />
         </ToolbarButton>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleSaveClick}
+          disabled={!isDirty}
+          className="flex items-center gap-2"
+          title="儲存 (Ctrl+S)"
+        >
+          <Save className="h-4 w-4" />
+          {isDirty ? "儲存" : "已儲存"}
+        </Button>
       </div>
 
-      <SelectionMenu editor={editor} />
+      <SelectionMenu editor={editor} onSave={onSave} />
 
       <EditorContent editor={editor} />
     </div>

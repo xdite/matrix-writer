@@ -7,13 +7,23 @@ import { textAssistantService } from '@/domains/matrix/services/textAssistantSer
 import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/lib/utils'
 import { marked } from 'marked'
+import commands from '@/domains/matrix/constants/commands.json'
 
 interface SelectionMenuProps {
   editor: Editor
+  onSave?: () => void
 }
 
-export function SelectionMenu({ editor }: SelectionMenuProps) {
-  const [isOpen, setIsOpen] = useState(false)
+export function SelectionMenu({ editor, onSave }: SelectionMenuProps) {
+  const [isOpen, setIsOpen] = useState(() => {
+    return localStorage.getItem('aiSidebarOpen') === 'true'
+  })
+  
+  useEffect(() => {
+    localStorage.setItem('aiSidebarOpen', isOpen.toString())
+  }, [isOpen])
+
+  const [keepOpen, setKeepOpen] = useState(false)
   const [command, setCommand] = useState('')
   const [selectedText, setSelectedText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -46,12 +56,7 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
     setCommand('')
     setSuggestion('')
     setIsOpen(true)
-    
-    // 取消選取
-    editor.commands.setTextSelection({
-      from: from,
-      to: from
-    })
+    localStorage.setItem('aiSidebarOpen', 'true')
   }
 
   const scrollToBottom = () => {
@@ -98,16 +103,16 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
     const tempDiv = document.createElement('div')
     tempDiv.innerHTML = suggestion
     const plainText = tempDiv.textContent || ''
-
     editor.commands.insertContent(plainText)
     
-    handleClose()
+    onSave?.()
   }
 
-  const handleClose = () => {
+  const handleForceClose = () => {
     setIsOpen(false)
     setCommand('')
     setSuggestion('')
+    localStorage.setItem('aiSidebarOpen', 'false')
   }
 
   const handleCopy = (text: string, index: number) => {
@@ -120,23 +125,17 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
 
   const handleInsertCode = (text: string, index: number) => {
     if (selectionRange) {
-      // 移動到原始選取的結束位置
       editor.commands.setTextSelection(selectionRange.to)
       
-      // 將文字轉換為 HTML
       const htmlContent = marked(text, {
         breaks: true,
         gfm: true
       })
       
-      // 在插入前後都加入換行，並插入轉換後的 HTML
       editor.commands.insertContent('\n\n' + htmlContent + '\n\n')
     }
     
-    toast({
-      title: "已插入程式碼",
-      description: "程式碼已插入到選取位置之後",
-    })
+    onSave?.()
   }
 
   const renderWithCopyButton = (html: string) => {
@@ -215,6 +214,46 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
     return result
   }
 
+  // Add keyboard shortcut handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isOpen || !selectedText) return
+      
+      if (e.altKey && e.key >= '1' && e.key <= '3') {
+        e.preventDefault()
+        const index = parseInt(e.key) - 1
+        const preset = commands.presetCommands[index]
+        if (preset) {
+          setCommand(preset.command)
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, selectedText])
+
+  // Add effect to update selected text when selection changes
+  useEffect(() => {
+    const handleSelectionUpdate = () => {
+      if (editor && isOpen) {
+        const { from, to } = editor.state.selection
+        const text = editor.state.doc.textBetween(from, to)
+        if (text) {
+          setSelectedText(text)
+          setSelectionRange({ from, to })
+        }
+      }
+    }
+
+    // Listen to selection changes
+    editor.on('selectionUpdate', handleSelectionUpdate)
+    
+    return () => {
+      editor.off('selectionUpdate', handleSelectionUpdate)
+    }
+  }, [editor, isOpen])
+
   return (
     <>
       <BubbleMenu 
@@ -280,12 +319,10 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
       </BubbleMenu>
 
       {/* Sidebar Chat */}
-      <div
-        className={cn(
-          "fixed right-0 top-0 h-screen w-[500px] bg-white shadow-lg transform transition-transform duration-200 ease-in-out border-l",
-          isOpen ? "translate-x-0" : "translate-x-full"
-        )}
-      >
+      <div className={cn(
+        "fixed right-0 top-0 h-screen w-[500px] bg-white shadow-lg transform transition-transform duration-200 ease-in-out border-l",
+        isOpen ? "translate-x-0" : "translate-x-full"
+      )}>
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b">
@@ -293,17 +330,14 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
             <Button
               variant="ghost"
               size="icon"
-              onClick={handleClose}
+              onClick={handleForceClose}
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
 
           {/* Content */}
-          <div 
-            ref={chatContentRef}
-            className="flex-1 overflow-auto p-6 space-y-4 scroll-smooth"
-          >
+          <div ref={chatContentRef} className="flex-1 overflow-auto p-6 space-y-4 scroll-smooth">
             {selectedText && (
               <div className="p-4 bg-muted rounded-md">
                 <div className="text-sm text-muted-foreground mb-2">選取的文字：</div>
@@ -311,7 +345,24 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
               </div>
             )}
 
-            <div className="space-y-2">
+            {/* 使用 JSON 中的預設命令 */}
+            <div className="grid grid-cols-3 gap-2">
+              {commands.presetCommands.map((preset, index) => (
+                <Button
+                  key={index}
+                  variant="outline" 
+                  className="h-auto py-2 border-2"
+                  onClick={() => {
+                    setCommand(preset.command)
+                  }}
+                  disabled={isLoading}
+                >
+                  {preset.label}
+                </Button>
+              ))}
+            </div>
+              
+            <div className="relative mt-4">
               <Textarea
                 placeholder="輸入你想要的建議，例如：幫我改寫得更生動..."
                 value={command}
@@ -320,7 +371,7 @@ export function SelectionMenu({ editor }: SelectionMenuProps) {
                 className="text-base resize-none"
               />
               <Button
-                className="w-full"
+                className="w-full mt-2"
                 onClick={handleAIAssist}
                 disabled={isLoading || !command.trim()}
               >
